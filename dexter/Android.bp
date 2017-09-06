@@ -1,0 +1,30 @@
+cc_binary {
+    name: "dexter",
+    srcs: [
+        "dexter.cc",
+        "dissasembler.cc",
+        "experimental.cc",
+        "main.cc",
+    ],
+    static_libs: [
+        "slicer",
+    ],
+    rtti: true,
+    host_supported: true,
+    device_supported: true,
+    target: {
+        host: {
+            shared_libs: ["libz-host"],
+        },
+        android: {
+            shared_libs: ["libz"],
+        },
+    },
+    // TODO move includes so this isn't needed.
+    include_dirs: ["tools/dexter"],
+    cflags: [
+        // TODO Remove these flags: b/65298177
+        "-Wno-sign-compare",
+        "-Wno-unused-parameter",
+    ],
+}
