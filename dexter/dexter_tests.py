@@ -14,7 +14,7 @@ argParser.add_argument('-update', action = 'store_true', help = 'Update the expe
 args = argParser.parse_args()
 
 # the bazel sandbox test data root
-data_root = args.root or 'tools/base/profiler/native/testdata/dex'
+data_root = args.root or 'tools/dexter/testdata'
 
 # update expected (golden) output?
 if args.update:
