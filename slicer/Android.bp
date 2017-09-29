@@ -20,14 +20,7 @@ cc_library {
     export_include_dirs: ["."],
     host_supported: true,
     device_supported: true,
-    target: {
-        host: {
-            shared_libs: ["libz-host"],
-        },
-        android: {
-            shared_libs: ["libz"],
-        },
-    },
+    shared_libs: ["libz"],
     rtti: true,
     cflags: [
         // TODO Remove these flags: b/65298177
