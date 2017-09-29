@@ -9,17 +9,10 @@ cc_binary {
     static_libs: [
         "slicer",
     ],
+    shared_libs: ["libz"],
     rtti: true,
     host_supported: true,
     device_supported: true,
-    target: {
-        host: {
-            shared_libs: ["libz-host"],
-        },
-        android: {
-            shared_libs: ["libz"],
-        },
-    },
     // TODO move includes so this isn't needed.
     include_dirs: ["tools/dexter"],
     cflags: [
