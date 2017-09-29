@@ -16,6 +16,8 @@ cc_binary {
     // TODO move includes so this isn't needed.
     include_dirs: ["tools/dexter"],
     cflags: [
+        "-Wall",
+        "-Werror",
         // TODO Remove these flags: b/65298177
         "-Wno-sign-compare",
         "-Wno-unused-parameter",
