@@ -23,6 +23,8 @@ cc_library {
     shared_libs: ["libz"],
     rtti: true,
     cflags: [
+        "-Wall",
+        "-Werror",
         // TODO Remove these flags: b/65298177
         "-Wno-sign-compare",
         "-Wno-unused-parameter",
