@@ -934,7 +934,10 @@ void Reader::ValidateHeader() {
   CHECK(header_->header_size == sizeof(dex::Header));
   CHECK(header_->endian_tag == dex::kEndianConstant);
   CHECK(header_->data_size % 4 == 0);
-  CHECK(header_->data_off + header_->data_size <= size_);
+
+  // Known issue: The fields might be slighly corrupted b/65452964
+  // CHECK(header_->data_off + header_->data_size <= size_);
+
   CHECK(header_->string_ids_off % 4 == 0);
   CHECK(header_->type_ids_size < 65536);
   CHECK(header_->type_ids_off % 4 == 0);
@@ -953,7 +956,9 @@ void Reader::ValidateHeader() {
   WEAK_CHECK(header_->data_off + header_->data_size == size_);
 
   // but we should still have the whole data section
-  CHECK(header_->data_off + header_->data_size <= size_);
+
+  // Known issue: The fields might be slighly corrupted b/65452964
+  // CHECK(header_->data_off + header_->data_size <= size_);
 
   // validate the map
   // (map section size = sizeof(MapList::size) + sizeof(MapList::list[size])
