@@ -195,21 +195,21 @@ bool PrintCodeIrVisitor::Visit(lir::String* string) {
 }
 
 bool PrintCodeIrVisitor::Visit(lir::Type* type) {
-  CHECK(type->index != dex::kNoIndex);
+  SLICER_CHECK(type->index != dex::kNoIndex);
   auto ir_type = type->ir_type;
   printf("%s", ir_type->Decl().c_str());
   return true;
 }
 
 bool PrintCodeIrVisitor::Visit(lir::Field* field) {
-  CHECK(field->index != dex::kNoIndex);
+  SLICER_CHECK(field->index != dex::kNoIndex);
   auto ir_field = field->ir_field;
   printf("%s.%s", ir_field->parent->Decl().c_str(), ir_field->name->c_str());
   return true;
 }
 
 bool PrintCodeIrVisitor::Visit(lir::Method* method) {
-  CHECK(method->index != dex::kNoIndex);
+  SLICER_CHECK(method->index != dex::kNoIndex);
   auto ir_method = method->ir_method;
   printf("%s.%s%s",
          ir_method->parent->Decl().c_str(),
