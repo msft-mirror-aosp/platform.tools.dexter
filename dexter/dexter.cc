@@ -283,7 +283,7 @@ bool Dexter::CreateNewImage(std::shared_ptr<ir::DexFile> dex_ir) {
     return false;
   }
 
-  SCOPE_EXIT {
+  SLICER_SCOPE_EXIT {
     allocator.Free(new_image);
   };
 
@@ -300,12 +300,12 @@ bool Dexter::CreateNewImage(std::shared_ptr<ir::DexFile> dex_ir) {
       return false;
     }
 
-    SCOPE_EXIT {
+    SLICER_SCOPE_EXIT {
       fclose(out_file);
     };
 
     // write the new image
-    CHECK(fwrite(new_image, 1, new_image_size, out_file) == new_image_size);
+    SLICER_CHECK(fwrite(new_image, 1, new_image_size, out_file) == new_image_size);
   }
 
   return true;
@@ -324,7 +324,7 @@ int Dexter::ProcessDex() {
     return 1;
   }
 
-  SCOPE_EXIT {
+  SLICER_SCOPE_EXIT {
     fclose(in_file);
   };
 
@@ -337,7 +337,7 @@ int Dexter::ProcessDex() {
 
   // read input .dex file
   fseek(in_file, 0, SEEK_SET);
-  CHECK(fread(in_buff.get(), 1, in_size, in_file) == in_size);
+  SLICER_CHECK(fread(in_buff.get(), 1, in_size, in_file) == in_size);
 
   // initialize the .dex reader
   dex::Reader reader(in_buff.get(), in_size);
