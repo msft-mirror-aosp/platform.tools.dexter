@@ -236,22 +236,22 @@ void StressExitHook(std::shared_ptr<ir::DexFile> dex_ir) {
 
       switch (bytecode->opcode) {
         case dex::OP_RETURN_VOID:
-          CHECK(return_void);
+          SLICER_CHECK(return_void);
           break;
         case dex::OP_RETURN:
-          CHECK(!return_void);
+          SLICER_CHECK(!return_void);
           move_result_opcode = dex::OP_MOVE_RESULT;
           reg = bytecode->CastOperand<lir::VReg>(0)->reg;
           reg_count = 1;
           break;
         case dex::OP_RETURN_OBJECT:
-          CHECK(!return_void);
+          SLICER_CHECK(!return_void);
           move_result_opcode = dex::OP_MOVE_RESULT_OBJECT;
           reg = bytecode->CastOperand<lir::VReg>(0)->reg;
           reg_count = 1;
           break;
         case dex::OP_RETURN_WIDE:
-          CHECK(!return_void);
+          SLICER_CHECK(!return_void);
           move_result_opcode = dex::OP_MOVE_RESULT_WIDE;
           reg = bytecode->CastOperand<lir::VRegPair>(0)->base_reg;
           reg_count = 2;
@@ -299,10 +299,10 @@ void TestMethodInstrumenter(std::shared_ptr<ir::DexFile> dex_ir) {
       ir::MethodId("LTracer;", "wrapFoo"))  ;
 
   auto method1 = ir::MethodId("LTarget;", "foo", "(ILjava/lang/String;)I");
-  CHECK(mi.InstrumentMethod(method1));
+  SLICER_CHECK(mi.InstrumentMethod(method1));
 
   auto method2 = ir::MethodId("LTarget;", "foo", "(I[[Ljava/lang/String;)Ljava/lang/Integer;");
-  CHECK(mi.InstrumentMethod(method2));
+  SLICER_CHECK(mi.InstrumentMethod(method2));
 }
 
 // Stress scratch register allocation
@@ -318,11 +318,11 @@ void StressScratchRegs(std::shared_ptr<ir::DexFile> dex_ir) {
   // apply the transformations to every single method
   for (auto& ir_method : dex_ir->encoded_methods) {
     if (ir_method->code != nullptr) {
-      CHECK(mi.InstrumentMethod(ir_method.get()));
-      CHECK(t1->ScratchRegs().size() == 1);
-      CHECK(t2->ScratchRegs().size() == 1);
-      CHECK(t3->ScratchRegs().size() == 1);
-      CHECK(t4->ScratchRegs().size() == 20);
+      SLICER_CHECK(mi.InstrumentMethod(ir_method.get()));
+      SLICER_CHECK(t1->ScratchRegs().size() == 1);
+      SLICER_CHECK(t2->ScratchRegs().size() == 1);
+      SLICER_CHECK(t3->ScratchRegs().size() == 1);
+      SLICER_CHECK(t4->ScratchRegs().size() == 20);
     }
   }
 }
@@ -401,7 +401,7 @@ void CodeCoverage(std::shared_ptr<ir::DexFile> dex_ir) {
           break;
         }
       }
-      CHECK(trace_point != nullptr);
+      SLICER_CHECK(trace_point != nullptr);
 
       // special case: don't separate 'move-result-<kind>' from the preceding invoke
       auto opcode = static_cast<lir::Bytecode*>(trace_point)->opcode;
@@ -442,7 +442,7 @@ void StressFindMethod(std::shared_ptr<ir::DexFile> dex_ir) {
     auto signature = decl->prototype->Signature();
     auto class_descriptor = decl->parent->descriptor;
     ir::MethodId method_id(class_descriptor->c_str(), decl->name->c_str(), signature.c_str());
-    CHECK(builder.FindMethod(method_id) == ir_method.get());
+    SLICER_CHECK(builder.FindMethod(method_id) == ir_method.get());
     ++method_count;
   }
   printf("Everything looks fine, found %d methods.\n", method_count);
@@ -474,7 +474,7 @@ void RegsHistogram(std::shared_ptr<ir::DexFile> dex_ir) {
     if (ir_method->code != nullptr) {
       const int regs = ir_method->code->registers;
       const int ins =  ir_method->code->ins_count;
-      CHECK(regs >= ins);
+      SLICER_CHECK(regs >= ins);
       regs_histogram[regs]++;
       param_histogram[ins]++;
       extra_histogram[regs - ins]++;

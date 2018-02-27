@@ -16,8 +16,7 @@ cc_defaults {
         "tryblocks_encoder.cc",
         "writer.cc",
     ],
-    // TODO Move includes around so we don't need to have include_dirs in users.
-    export_include_dirs: ["."],
+    export_include_dirs: ["export"],
     device_supported: true,
     shared_libs: ["libz"],
     rtti: true,
