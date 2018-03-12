@@ -13,8 +13,6 @@ cc_binary {
     rtti: true,
     host_supported: true,
     device_supported: true,
-    // TODO move includes so this isn't needed.
-    include_dirs: ["tools/dexter"],
     cflags: [
         "-Wall",
         "-Werror",
