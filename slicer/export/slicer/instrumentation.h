@@ -46,7 +46,7 @@ class EntryHook : public Transformation {
       : hook_method_id_(hook_method_id),
         use_object_type_for_this_argument_(use_object_type_for_this_argument) {
     // hook method signature is generated automatically
-    CHECK(hook_method_id_.signature == nullptr);
+    SLICER_CHECK(hook_method_id_.signature == nullptr);
   }
 
   virtual bool Apply(lir::CodeIr* code_ir) override;
@@ -66,7 +66,7 @@ class ExitHook : public Transformation {
  public:
   explicit ExitHook(const ir::MethodId& hook_method_id) : hook_method_id_(hook_method_id) {
     // hook method signature is generated automatically
-    CHECK(hook_method_id_.signature == nullptr);
+    SLICER_CHECK(hook_method_id_.signature == nullptr);
   }
 
   virtual bool Apply(lir::CodeIr* code_ir) override;
@@ -75,24 +75,52 @@ class ExitHook : public Transformation {
   ir::MethodId hook_method_id_;
 };
 
-// Replace every invoke-virtual[/range] to the a specified method with
-// a invoke-static[/range] to the detour method. The detour is a static
-// method which takes the same arguments as the original method plus
-// an explicit "this" argument, and returns the same type as the original method
-class DetourVirtualInvoke : public Transformation {
+// Base class for detour hooks. Replace every occurrence of specific opcode with
+// something else. The detour is a static method which takes the same arguments
+// as the original method plus an explicit "this" argument and returns the same
+// type as the original method. Derived classes must implement GetNewOpcode.
+class DetourHook : public Transformation {
  public:
-  DetourVirtualInvoke(const ir::MethodId& orig_method_id, const ir::MethodId& detour_method_id)
-    : orig_method_id_(orig_method_id), detour_method_id_(detour_method_id) {
+  DetourHook(const ir::MethodId& orig_method_id,
+             const ir::MethodId& detour_method_id)
+      : orig_method_id_(orig_method_id), detour_method_id_(detour_method_id) {
     // detour method signature is automatically created
     // to match the original method and must not be explicitly specified
-    CHECK(detour_method_id_.signature == nullptr);
+    SLICER_CHECK(detour_method_id_.signature == nullptr);
   }
 
   virtual bool Apply(lir::CodeIr* code_ir) override;
 
- private:
+ protected:
   ir::MethodId orig_method_id_;
   ir::MethodId detour_method_id_;
+
+  // Returns a new opcode to replace the desired opcode or OP_NOP otherwise.
+  virtual dex::Opcode GetNewOpcode(dex::Opcode opcode) = 0;
+};
+
+// Replace every invoke-virtual[/range] to the a specified method with
+// a invoke-static[/range] to the detour method.
+class DetourVirtualInvoke : public DetourHook {
+ public:
+  DetourVirtualInvoke(const ir::MethodId& orig_method_id,
+                      const ir::MethodId& detour_method_id)
+      : DetourHook(orig_method_id, detour_method_id) {}
+
+ protected:
+  virtual dex::Opcode GetNewOpcode(dex::Opcode opcode) override;
+};
+
+// Replace every invoke-interface[/range] to the a specified method with
+// a invoke-static[/range] to the detour method.
+class DetourInterfaceInvoke : public DetourHook {
+ public:
+  DetourInterfaceInvoke(const ir::MethodId& orig_method_id,
+                        const ir::MethodId& detour_method_id)
+      : DetourHook(orig_method_id, detour_method_id) {}
+
+ protected:
+  virtual dex::Opcode GetNewOpcode(dex::Opcode opcode) override;
 };
 
 // Allocates scratch registers without doing a full register allocation
@@ -100,13 +128,13 @@ class AllocateScratchRegs : public Transformation {
  public:
   explicit AllocateScratchRegs(int allocate_count, bool allow_renumbering = true)
     : allocate_count_(allocate_count), allow_renumbering_(allow_renumbering) {
-    CHECK(allocate_count > 0);
+    SLICER_CHECK(allocate_count > 0);
   }
 
   virtual bool Apply(lir::CodeIr* code_ir) override;
 
   const std::set<dex::u4>& ScratchRegs() const {
-    CHECK(scratch_regs_.size() == static_cast<size_t>(allocate_count_));
+    SLICER_CHECK(scratch_regs_.size() == static_cast<size_t>(allocate_count_));
     return scratch_regs_;
   }
 
@@ -134,7 +162,7 @@ class AllocateScratchRegs : public Transformation {
 //    slicer::MethodInstrumenter mi(dex_ir);
 //    mi.AddTransformation<slicer::EntryHook>(ir::MethodId("LTracer;", "OnEntry"));
 //    mi.AddTransformation<slicer::ExitHook>(ir::MethodId("LTracer;", "OnExit"));
-//    CHECK(mi.InstrumentMethod(ir::MethodId("LHello;", "Test", "(I)I")));
+//    SLICER_CHECK(mi.InstrumentMethod(ir::MethodId("LHello;", "Test", "(I)I")));
 //    ...
 //
 class MethodInstrumenter {
