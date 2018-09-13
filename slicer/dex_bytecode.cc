@@ -855,19 +855,19 @@ Instruction DecodeInstruction(const u2* bytecode) {
           // fifth argument comes from the A field in the
           // instruction, but it's labeled G in the spec.
           dec.arg[4] = InstA(inst);
-        // fallthrough
+          FALLTHROUGH_INTENDED;
         case 4:
           dec.arg[3] = (regList >> 12) & 0x0f;
-        // fallthrough
+          FALLTHROUGH_INTENDED;
         case 3:
           dec.arg[2] = (regList >> 8) & 0x0f;
-        // fallthrough
+          FALLTHROUGH_INTENDED;
         case 2:
           dec.arg[1] = (regList >> 4) & 0x0f;
-        // fallthrough
+          FALLTHROUGH_INTENDED;
         case 1:
           dec.vC = dec.arg[0] = regList & 0x0f;
-        // fallthrough
+          FALLTHROUGH_INTENDED;
         case 0:
           // Valid, but no need to do anything
           break;
