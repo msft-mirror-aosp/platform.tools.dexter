@@ -130,7 +130,7 @@ struct Const32 : public Operand {
     float float_value;
   } u;
 
-  Const32(dex::u4 value) { u.u4_value = value; }
+  explicit Const32(dex::u4 value) { u.u4_value = value; }
 
   virtual bool Accept(Visitor* visitor) override { return visitor->Visit(this); }
 };
@@ -142,7 +142,7 @@ struct Const64 : public Operand {
     double double_value;
   } u;
 
-  Const64(dex::u8 value) { u.u8_value = value; }
+  explicit Const64(dex::u8 value) { u.u8_value = value; }
 
   virtual bool Accept(Visitor* visitor) override { return visitor->Visit(this); }
 };
@@ -150,7 +150,7 @@ struct Const64 : public Operand {
 struct VReg : public Operand {
   dex::u4 reg;
 
-  VReg(dex::u4 reg) : reg(reg) {}
+  explicit VReg(dex::u4 reg) : reg(reg) {}
 
   virtual bool Accept(Visitor* visitor) override { return visitor->Visit(this); }
 };
@@ -158,7 +158,7 @@ struct VReg : public Operand {
 struct VRegPair : public Operand {
   dex::u4 base_reg;
 
-  VRegPair(dex::u4 base_reg) : base_reg(base_reg) {}
+  explicit VRegPair(dex::u4 base_reg) : base_reg(base_reg) {}
 
   virtual bool Accept(Visitor* visitor) override { return visitor->Visit(this); }
 };
@@ -181,7 +181,7 @@ struct VRegRange : public Operand {
 struct IndexedOperand : public Operand {
   dex::u4 index;
 
-  IndexedOperand(dex::u4 index) : index(index) {}
+  explicit IndexedOperand(dex::u4 index) : index(index) {}
 };
 
 struct String : public IndexedOperand {
@@ -219,7 +219,7 @@ struct Method : public IndexedOperand {
 struct CodeLocation : public Operand {
   Label* label;
 
-  CodeLocation(Label* label) : label(label) {}
+  explicit CodeLocation(Label* label) : label(label) {}
 
   virtual bool Accept(Visitor* visitor) override { return visitor->Visit(this); }
 };
@@ -278,7 +278,7 @@ struct Label : public Instruction {
   int refCount = 0;
   bool aligned = false;
 
-  Label(dex::u4 offset) { this->offset = offset; }
+  explicit Label(dex::u4 offset) { this->offset = offset; }
 
   virtual bool Accept(Visitor* visitor) override { return visitor->Visit(this); }
 };
@@ -311,7 +311,7 @@ struct DbgInfoHeader : public Instruction {
 struct LineNumber : public Operand {
   int line = 0;
 
-  LineNumber(int line) : line(line) {
+  explicit LineNumber(int line) : line(line) {
     SLICER_WEAK_CHECK(line > 0);
   }
 
@@ -322,7 +322,7 @@ struct DbgInfoAnnotation : public Instruction {
   dex::u1 dbg_opcode = 0;
   std::vector<Operand*> operands;
 
-  DbgInfoAnnotation(dex::u1 dbg_opcode) : dbg_opcode(dbg_opcode) {}
+  explicit DbgInfoAnnotation(dex::u1 dbg_opcode) : dbg_opcode(dbg_opcode) {}
 
   template<class T>
   T* CastOperand(int index) const {

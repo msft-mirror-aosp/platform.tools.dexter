@@ -238,7 +238,7 @@ dex::Opcode DetourInterfaceInvoke::GetNewOpcode(dex::Opcode opcode) {
 // (renumbers vN to vN+shift)
 class RegsRenumberVisitor : public lir::Visitor {
  public:
-  RegsRenumberVisitor(int shift) : shift_(shift) {
+  explicit RegsRenumberVisitor(int shift) : shift_(shift) {
     SLICER_CHECK(shift > 0);
   }
 
