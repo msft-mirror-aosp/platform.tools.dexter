@@ -19,6 +19,18 @@
 
 namespace slicer {
 
+namespace {
+
+struct BytecodeConvertingVisitor : public lir::Visitor {
+  lir::Bytecode* out = nullptr;
+  bool Visit(lir::Bytecode* bytecode) {
+    out = bytecode;
+    return true;
+  }
+};
+
+}  // namespace
+
 bool EntryHook::Apply(lir::CodeIr* code_ir) {
   ir::Builder builder(code_ir->dex_ir);
   const auto ir_method = code_ir->ir_method;
@@ -61,7 +73,9 @@ bool EntryHook::Apply(lir::CodeIr* code_ir) {
 
   // insert the hook before the first bytecode in the method body
   for (auto instr : code_ir->instructions) {
-    auto bytecode = dynamic_cast<lir::Bytecode*>(instr);
+    BytecodeConvertingVisitor visitor;
+    instr->Accept(&visitor);
+    auto bytecode = visitor.out;
     if (bytecode == nullptr) {
       continue;
     }
@@ -96,7 +110,9 @@ bool ExitHook::Apply(lir::CodeIr* code_ir) {
 
   // find and instrument all return instructions
   for (auto instr : code_ir->instructions) {
-    auto bytecode = dynamic_cast<lir::Bytecode*>(instr);
+    BytecodeConvertingVisitor visitor;
+    instr->Accept(&visitor);
+    auto bytecode = visitor.out;
     if (bytecode == nullptr) {
       continue;
     }
@@ -163,7 +179,9 @@ bool DetourHook::Apply(lir::CodeIr* code_ir) {
 
   // search for matching invoke-virtual[/range] bytecodes
   for (auto instr : code_ir->instructions) {
-    auto bytecode = dynamic_cast<lir::Bytecode*>(instr);
+    BytecodeConvertingVisitor visitor;
+    instr->Accept(&visitor);
+    auto bytecode = visitor.out;
     if (bytecode == nullptr) {
       continue;
     }
