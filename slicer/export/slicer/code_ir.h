@@ -16,6 +16,12 @@
 
 #pragma once
 
+#if defined(__clang__)
+  #if __has_feature(cxx_rtti)
+    #define RTTI_ENABLED 1
+  #endif
+#endif
+
 #include "common.h"
 #include "memview.h"
 #include "dex_bytecode.h"
@@ -114,11 +120,6 @@ struct Node {
   Node& operator=(const Node&) = delete;
 
   virtual bool Accept(Visitor* visitor) { return false; }
-
-  template<class T>
-  bool IsA() const {
-    return dynamic_cast<const T*>(this) != nullptr;
-  }
 };
 
 struct Operand : public Node {};
@@ -235,15 +236,74 @@ struct Instruction : public Node {
 
 using InstructionsList = slicer::IntrusiveList<Instruction>;
 
+namespace detail {
+
+template<class T>
+inline T* CastOperand(Operand* op) {
+#ifdef RTTI_ENABLED
+  T* operand = dynamic_cast<T*>(op);
+  SLICER_CHECK(operand != nullptr);
+  return operand;
+#else
+  SLICER_CHECK(op != nullptr);
+  struct CastVisitor : public Visitor {
+    T* converted = nullptr;
+    bool Visit(T* val) override {
+      converted = val;
+      return true;
+    }
+  };
+  CastVisitor cv;
+  op->Accept(&cv);
+  SLICER_CHECK(cv.converted != nullptr);
+  return cv.converted;
+#endif
+}
+
+// Special-case for IndexedOperand.
+template<>
+inline IndexedOperand* CastOperand<IndexedOperand>(Operand* op) {
+#ifdef RTTI_ENABLED
+  IndexedOperand* operand = dynamic_cast<IndexedOperand*>(op);
+  SLICER_CHECK(operand != nullptr);
+  return operand;
+#else
+  SLICER_CHECK(op != nullptr);
+  struct CastVisitor : public Visitor {
+    IndexedOperand* converted = nullptr;
+    bool Visit(String* val) override {
+      converted = val;
+      return true;
+    }
+    bool Visit(Type* val) override {
+      converted = val;
+      return true;
+    }
+    bool Visit(Field* val) override {
+      converted = val;
+      return true;
+    }
+    bool Visit(Method* val) override {
+      converted = val;
+      return true;
+    }
+  };
+  CastVisitor cv;
+  op->Accept(&cv);
+  SLICER_CHECK(cv.converted != nullptr);
+  return cv.converted;
+#endif
+}
+
+}  // namespace detail
+
 struct Bytecode : public Instruction {
   dex::Opcode opcode = dex::OP_NOP;
   std::vector<Operand*> operands;
 
   template<class T>
   T* CastOperand(int index) const {
-    T* operand = dynamic_cast<T*>(operands[index]);
-    SLICER_CHECK(operand != nullptr);
-    return operand;
+    return detail::CastOperand<T>(operands[index]);
   }
 
   virtual bool Accept(Visitor* visitor) override { return visitor->Visit(this); }
@@ -326,9 +386,7 @@ struct DbgInfoAnnotation : public Instruction {
 
   template<class T>
   T* CastOperand(int index) const {
-    T* operand = dynamic_cast<T*>(operands[index]);
-    SLICER_CHECK(operand != nullptr);
-    return operand;
+    return detail::CastOperand<T>(operands[index]);
   }
 
   virtual bool Accept(Visitor* visitor) override { return visitor->Visit(this); }
