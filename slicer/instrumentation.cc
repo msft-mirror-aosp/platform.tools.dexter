@@ -39,10 +39,13 @@ bool EntryHook::Apply(lir::CodeIr* code_ir) {
   std::vector<ir::Type*> param_types;
   if ((ir_method->access_flags & dex::kAccStatic) == 0) {
     ir::Type* this_argument_type;
-    if (use_object_type_for_this_argument_) {
-      this_argument_type = builder.GetType("Ljava/lang/Object;");
-    } else {
-      this_argument_type = ir_method->decl->parent;
+    switch (tweak_) {
+      case Tweak::ThisAsObject:
+        this_argument_type = builder.GetType("Ljava/lang/Object;");
+        break;
+      default:
+        this_argument_type = ir_method->decl->parent;
+        break;
     }
     param_types.push_back(this_argument_type);
   }
