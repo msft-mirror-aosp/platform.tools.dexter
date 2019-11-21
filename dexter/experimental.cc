@@ -291,8 +291,11 @@ void StressExitHook(std::shared_ptr<ir::DexFile> dex_ir) {
 // Test slicer::MethodInstrumenter
 void TestMethodInstrumenter(std::shared_ptr<ir::DexFile> dex_ir) {
   slicer::MethodInstrumenter mi(dex_ir);
-  mi.AddTransformation<slicer::EntryHook>(ir::MethodId("LTracer;", "onFooEntry"), true);
-  mi.AddTransformation<slicer::EntryHook>(ir::MethodId("LTracer;", "onFooEntry"), false);
+  mi.AddTransformation<slicer::EntryHook>(
+      ir::MethodId("LTracer;", "onFooEntry"),
+      slicer::EntryHook::Tweak::ThisAsObject);
+  mi.AddTransformation<slicer::EntryHook>(
+      ir::MethodId("LTracer;", "onFooEntry"));
   mi.AddTransformation<slicer::ExitHook>(ir::MethodId("LTracer;", "onFooExit"));
   mi.AddTransformation<slicer::DetourVirtualInvoke>(
       ir::MethodId("LBase;", "foo", "(ILjava/lang/String;)I"),
