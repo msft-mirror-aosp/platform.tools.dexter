@@ -45,7 +45,12 @@ class EntryHook : public Transformation {
     // Expose the "this" argument of non-static methods as the "Object" type.
     // This can be helpful when the code you want to handle the hook doesn't
     // have access to the actual type in its classpath.
-    ThisAsObject
+    ThisAsObject,
+    // Forward incoming arguments as an array. Zero-th element of the array is
+    // "this" object if instrumented method isn't static.
+    // It is helpul, when you inject the same hook into the different
+    // methods.
+    ArrayParams,
   };
 
   explicit EntryHook(const ir::MethodId& hook_method_id, Tweak tweak)
@@ -68,6 +73,8 @@ class EntryHook : public Transformation {
  private:
   ir::MethodId hook_method_id_;
   Tweak tweak_;
+
+  bool InjectArrayParamsHook(lir::CodeIr* code_ir, lir::Bytecode* bytecode);
 };
 
 // Insert a call to the "exit hook" method before every return
