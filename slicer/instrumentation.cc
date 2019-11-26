@@ -270,10 +270,15 @@ bool EntryHook::InjectArrayParamsHook(lir::CodeIr* code_ir, lir::Bytecode* bytec
 bool ExitHook::Apply(lir::CodeIr* code_ir) {
   ir::Builder builder(code_ir->dex_ir);
   const auto ir_method = code_ir->ir_method;
-  const auto return_type = ir_method->decl->prototype->return_type;
-
+  const auto declared_return_type = ir_method->decl->prototype->return_type;
+  bool return_as_object = tweak_ == Tweak::ReturnAsObject;
   // do we have a void-return method?
-  bool return_void = (::strcmp(return_type->descriptor->c_str(), "V") == 0);
+  bool return_void = (::strcmp(declared_return_type->descriptor->c_str(), "V") == 0);
+  // returnAsObject supports only object return type;
+  SLICER_CHECK(!return_as_object ||
+      (declared_return_type->GetCategory() == ir::Type::Category::Reference));
+  const auto return_type = return_as_object ? builder.GetType("Ljava/lang/Object;")
+      : declared_return_type;
 
   // construct the hook method declaration
   std::vector<ir::Type*> param_types;
@@ -349,6 +354,15 @@ bool ExitHook::Apply(lir::CodeIr* code_ir) {
       move_result->opcode = move_result_opcode;
       move_result->operands.push_back(bytecode->operands[0]);
       code_ir->instructions.InsertBefore(bytecode, move_result);
+
+      if (tweak_ == Tweak::ReturnAsObject) {
+        auto check_cast = code_ir->Alloc<lir::Bytecode>();
+        check_cast->opcode = dex::OP_CHECK_CAST;
+        check_cast->operands.push_back(code_ir->Alloc<lir::VReg>(reg));
+        check_cast->operands.push_back(
+            code_ir->Alloc<lir::Type>(declared_return_type, declared_return_type->orig_index));
+        code_ir->instructions.InsertBefore(bytecode, check_cast);
+      }
     }
   }
 

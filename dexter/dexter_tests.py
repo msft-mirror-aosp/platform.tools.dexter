@@ -47,6 +47,7 @@ test_cases = {
   'regs_usage'       : { 'args' : '-x regs_histogram', 'input' : ['*.dex'] },
   'code_coverage'    : { 'args' : '-d -x code_coverage', 'input' : ['*.dex'] },
   'array_entry_hook' : { 'args' : '-d -x array_param_entry_hook', 'input' : ['mi.dex'] },
+  'object_exit_hook' : { 'args' : '-d -x return_obj_exit_hook', 'input' : ['mi.dex'] },
 }
 
 # run a shell command and returns the stdout content
