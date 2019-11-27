@@ -45,7 +45,12 @@ class EntryHook : public Transformation {
     // Expose the "this" argument of non-static methods as the "Object" type.
     // This can be helpful when the code you want to handle the hook doesn't
     // have access to the actual type in its classpath.
-    ThisAsObject
+    ThisAsObject,
+    // Forward incoming arguments as an array. Zero-th element of the array is
+    // "this" object if instrumented method isn't static.
+    // It is helpul, when you inject the same hook into the different
+    // methods.
+    ArrayParams,
   };
 
   explicit EntryHook(const ir::MethodId& hook_method_id, Tweak tweak)
@@ -68,6 +73,8 @@ class EntryHook : public Transformation {
  private:
   ir::MethodId hook_method_id_;
   Tweak tweak_;
+
+  bool InjectArrayParamsHook(lir::CodeIr* code_ir, lir::Bytecode* bytecode);
 };
 
 // Insert a call to the "exit hook" method before every return
@@ -75,15 +82,28 @@ class EntryHook : public Transformation {
 // original return value and it may return a new return value.
 class ExitHook : public Transformation {
  public:
-  explicit ExitHook(const ir::MethodId& hook_method_id) : hook_method_id_(hook_method_id) {
+  enum class Tweak {
+    None,
+    // return value will be passed as "Object" type.
+    // This can be helpful when the code you want to handle the hook doesn't
+    // have access to the actual type in its classpath or when you want to inject
+    // the same hook in multiple methods.
+    ReturnAsObject,
+  };
+
+   explicit ExitHook(const ir::MethodId& hook_method_id, Tweak tweak)
+      : hook_method_id_(hook_method_id), tweak_(tweak) {
     // hook method signature is generated automatically
     SLICER_CHECK(hook_method_id_.signature == nullptr);
   }
+
+  explicit ExitHook(const ir::MethodId& hook_method_id) : ExitHook(hook_method_id, Tweak::None) {}
 
   virtual bool Apply(lir::CodeIr* code_ir) override;
 
  private:
   ir::MethodId hook_method_id_;
+  Tweak tweak_;
 };
 
 // Base class for detour hooks. Replace every occurrence of specific opcode with
