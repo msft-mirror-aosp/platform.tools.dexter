@@ -161,7 +161,8 @@ bool EntryHook::Apply(lir::CodeIr* code_ir) {
 bool EntryHook::InjectArrayParamsHook(lir::CodeIr* code_ir, lir::Bytecode* bytecode) {
   ir::Builder builder(code_ir->dex_ir);
   const auto ir_method = code_ir->ir_method;
-  auto param_types = ir_method->decl->prototype->param_types->types;
+  auto param_types_list = ir_method->decl->prototype->param_types;
+  auto param_types = param_types_list != nullptr ? param_types_list->types : std::vector<ir::Type*>();
   bool is_static = (ir_method->access_flags & dex::kAccStatic) != 0;
 
   bool needsBoxingReg = false;
