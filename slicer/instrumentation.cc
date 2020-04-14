@@ -158,6 +158,54 @@ bool EntryHook::Apply(lir::CodeIr* code_ir) {
   return true;
 }
 
+void GenerateShiftParamsCode(lir::CodeIr* code_ir, lir::Instruction* position, dex::u4 shift) {
+  const auto ir_method = code_ir->ir_method;
+  SLICER_CHECK(ir_method->code->ins_count > 0);
+
+  // build a param list with the explicit "this" argument for non-static methods
+  std::vector<ir::Type*> param_types;
+  if ((ir_method->access_flags & dex::kAccStatic) == 0) {
+    param_types.push_back(ir_method->decl->parent);
+  }
+  if (ir_method->decl->prototype->param_types != nullptr) {
+    const auto& orig_param_types = ir_method->decl->prototype->param_types->types;
+    param_types.insert(param_types.end(), orig_param_types.begin(), orig_param_types.end());
+  }
+
+  const dex::u4 regs = ir_method->code->registers;
+  const dex::u4 ins_count = ir_method->code->ins_count;
+  SLICER_CHECK(regs >= ins_count);
+
+  // generate the args "relocation" instructions
+  dex::u4 reg = regs - ins_count;
+  for (const auto& type : param_types) {
+    auto move = code_ir->Alloc<lir::Bytecode>();
+    switch (type->GetCategory()) {
+      case ir::Type::Category::Reference:
+        move->opcode = dex::OP_MOVE_OBJECT_16;
+        move->operands.push_back(code_ir->Alloc<lir::VReg>(reg - shift));
+        move->operands.push_back(code_ir->Alloc<lir::VReg>(reg));
+        reg += 1;
+        break;
+      case ir::Type::Category::Scalar:
+        move->opcode = dex::OP_MOVE_16;
+        move->operands.push_back(code_ir->Alloc<lir::VReg>(reg - shift));
+        move->operands.push_back(code_ir->Alloc<lir::VReg>(reg));
+        reg += 1;
+        break;
+      case ir::Type::Category::WideScalar:
+        move->opcode = dex::OP_MOVE_WIDE_16;
+        move->operands.push_back(code_ir->Alloc<lir::VRegPair>(reg - shift));
+        move->operands.push_back(code_ir->Alloc<lir::VRegPair>(reg));
+        reg += 2;
+        break;
+      case ir::Type::Category::Void:
+        SLICER_FATAL("void parameter type");
+    }
+    code_ir->instructions.InsertBefore(position, move);
+  }
+}
+
 bool EntryHook::InjectArrayParamsHook(lir::CodeIr* code_ir, lir::Bytecode* bytecode) {
   ir::Builder builder(code_ir->dex_ir);
   const auto ir_method = code_ir->ir_method;
@@ -170,28 +218,28 @@ bool EntryHook::InjectArrayParamsHook(lir::CodeIr* code_ir, lir::Bytecode* bytec
     needsBoxingReg |= type->GetCategory() != ir::Type::Category::Reference;
   }
 
-  // allocate scract registers
-  slicer::AllocateScratchRegs alloc_regs(2 + needsBoxingReg);
-  alloc_regs.Apply(code_ir);
-  auto reg_iterator = alloc_regs.ScratchRegs().begin();
-  // register that will store size of during allocation
-  // later will be reused to store index when do "aput"
-  dex::u4 array_size_reg = *(reg_iterator);
-  // register that will store an array that will be passed
-  // as a parameter in entry hook
-  dex::u4 array_reg = *(++reg_iterator);
-  // if we need to boxing, this register stores result of boxing
-  dex::u4 boxing_reg = needsBoxingReg ? *(++reg_iterator) : 0;
+  // number of registers that we need to operate
+  dex::u2 regs_count = 2 + needsBoxingReg;
+  auto non_param_regs = ir_method->code->registers - ir_method->code->ins_count;
 
-  // TODO: handle very "high" registers
-  if (boxing_reg > 0xff) {
-    printf("WARNING: can't instrument method %s.%s%s\n",
-           ir_method->decl->parent->Decl().c_str(),
-           ir_method->decl->name->c_str(),
-           ir_method->decl->prototype->Signature().c_str());
-    return false;
+  // do we have enough registers to operate?
+  bool needsExtraRegs = non_param_regs < regs_count;
+  if (needsExtraRegs) {
+    // we don't have enough registers, so we allocate more, we will shift
+    // params to their original registers later.
+    code_ir->ir_method->code->registers += regs_count - non_param_regs;
   }
 
+  // simply use three first registry now
+ 
+  // register that will store size of during allocation
+  // later will be reused to store index when do "aput"
+  dex::u4 array_size_reg = 0;
+  // register that will store an array that will be passed
+  // as a parameter in entry hook
+  dex::u4 array_reg = 1;
+  // if we need to boxing, this register stores result of boxing
+  dex::u4 boxing_reg = needsBoxingReg ? 2 : 0;
   // array size bytecode
   auto const_size_op = code_ir->Alloc<lir::Bytecode>();
   const_size_op->opcode = dex::OP_CONST;
@@ -265,6 +313,22 @@ bool EntryHook::InjectArrayParamsHook(lir::CodeIr* code_ir, lir::Bytecode* bytec
   hook_invoke->operands.push_back(args);
   hook_invoke->operands.push_back(hook_method);
   code_ir->instructions.InsertBefore(bytecode, hook_invoke);
+
+  // clean up registries used by us
+  // registers are assigned to a marker value 0xFE_FE_FE_FE (decimal
+  // value: -16843010) to help identify use of uninitialized registers.
+  for (dex::u2 i = 0; i < regs_count; ++i) {
+    auto cleanup = code_ir->Alloc<lir::Bytecode>();
+    cleanup->opcode = dex::OP_CONST;
+    cleanup->operands.push_back(code_ir->Alloc<lir::VReg>(i));
+    cleanup->operands.push_back(code_ir->Alloc<lir::Const32>(0xFEFEFEFE));
+    code_ir->instructions.InsertBefore(bytecode, cleanup);
+  }
+
+  // now we have to shift params to their original registers
+  if (needsExtraRegs) {
+    GenerateShiftParamsCode(code_ir, bytecode, regs_count - non_param_regs);
+  }
   return true;
 }
 
@@ -532,57 +596,15 @@ void AllocateScratchRegs::RegsRenumbering(lir::CodeIr* code_ir) {
 //
 void AllocateScratchRegs::ShiftParams(lir::CodeIr* code_ir) {
   const auto ir_method = code_ir->ir_method;
-  SLICER_CHECK(ir_method->code->ins_count > 0);
   SLICER_CHECK(left_to_allocate_ > 0);
 
-  // build a param list with the explicit "this" argument for non-static methods
-  std::vector<ir::Type*> param_types;
-  if ((ir_method->access_flags & dex::kAccStatic) == 0) {
-    param_types.push_back(ir_method->decl->parent);
-  }
-  if (ir_method->decl->prototype->param_types != nullptr) {
-    const auto& orig_param_types = ir_method->decl->prototype->param_types->types;
-    param_types.insert(param_types.end(), orig_param_types.begin(), orig_param_types.end());
-  }
-
   const dex::u4 shift = left_to_allocate_;
-
   Allocate(code_ir, ir_method->code->registers, left_to_allocate_);
   assert(left_to_allocate_ == 0);
 
-  const dex::u4 regs = ir_method->code->registers;
-  const dex::u4 ins_count = ir_method->code->ins_count;
-  SLICER_CHECK(regs >= ins_count);
-
   // generate the args "relocation" instructions
-  auto first_instr = code_ir->instructions.begin();
-  dex::u4 reg = regs - ins_count;
-  for (const auto& type : param_types) {
-    auto move = code_ir->Alloc<lir::Bytecode>();
-    switch (type->GetCategory()) {
-      case ir::Type::Category::Reference:
-        move->opcode = dex::OP_MOVE_OBJECT_16;
-        move->operands.push_back(code_ir->Alloc<lir::VReg>(reg - shift));
-        move->operands.push_back(code_ir->Alloc<lir::VReg>(reg));
-        reg += 1;
-        break;
-      case ir::Type::Category::Scalar:
-        move->opcode = dex::OP_MOVE_16;
-        move->operands.push_back(code_ir->Alloc<lir::VReg>(reg - shift));
-        move->operands.push_back(code_ir->Alloc<lir::VReg>(reg));
-        reg += 1;
-        break;
-      case ir::Type::Category::WideScalar:
-        move->opcode = dex::OP_MOVE_WIDE_16;
-        move->operands.push_back(code_ir->Alloc<lir::VRegPair>(reg - shift));
-        move->operands.push_back(code_ir->Alloc<lir::VRegPair>(reg));
-        reg += 2;
-        break;
-      case ir::Type::Category::Void:
-        SLICER_FATAL("void parameter type");
-    }
-    code_ir->instructions.insert(first_instr, move);
-  }
+  auto first_instr = *(code_ir->instructions.begin());
+  GenerateShiftParamsCode(code_ir, first_instr, shift);
 }
 
 // Mark [first_reg, first_reg + count) as scratch registers
