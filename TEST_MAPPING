@@ -1,20 +1,10 @@
 {
-  "presubmit": [
+  "postsubmit": [
     {
-      "name": "CtsInlineMockingTestCases",
-      "options": [
-        {
-          "exclude-annotation": "androidx.test.filters.LargeTest"
-        }
-      ]
+      "name": "CtsInlineMockingTestCases"
     },
     {
-      "name": "CtsExtendedMockingTestCases",
-      "options": [
-        {
-          "exclude-annotation": "androidx.test.filters.LargeTest"
-        }
-      ]
+      "name": "CtsExtendedMockingTestCases"
     }
   ],
   "imports": [
