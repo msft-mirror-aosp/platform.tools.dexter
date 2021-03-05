@@ -91,6 +91,11 @@ void BoxValue(lir::Bytecode* bytecode,
   code_ir->instructions.InsertBefore(bytecode, move_result);
 }
 
+std::string MethodLabel(ir::EncodedMethod* ir_method) {
+  auto signature_str = ir_method->decl->prototype->Signature();
+  return ir_method->decl->parent->Decl() + "->" + ir_method->decl->name->c_str() + signature_str;
+}
+
 }  // namespace
 
 bool EntryHook::Apply(lir::CodeIr* code_ir) {
@@ -213,13 +218,8 @@ bool EntryHook::InjectArrayParamsHook(lir::CodeIr* code_ir, lir::Bytecode* bytec
   auto param_types = param_types_list != nullptr ? param_types_list->types : std::vector<ir::Type*>();
   bool is_static = (ir_method->access_flags & dex::kAccStatic) != 0;
 
-  bool needsBoxingReg = false;
-  for (auto type: param_types) {
-    needsBoxingReg |= type->GetCategory() != ir::Type::Category::Reference;
-  }
-
   // number of registers that we need to operate
-  dex::u2 regs_count = 2 + needsBoxingReg;
+  dex::u2 regs_count = 3;
   auto non_param_regs = ir_method->code->registers - ir_method->code->ins_count;
 
   // do we have enough registers to operate?
@@ -230,21 +230,23 @@ bool EntryHook::InjectArrayParamsHook(lir::CodeIr* code_ir, lir::Bytecode* bytec
     code_ir->ir_method->code->registers += regs_count - non_param_regs;
   }
 
-  // simply use three first registry now
- 
+  // use three first registers:
+  // all three are needed when we "aput" a string/boxed-value (1) into an array (2) at an index (3)
+
   // register that will store size of during allocation
   // later will be reused to store index when do "aput"
   dex::u4 array_size_reg = 0;
   // register that will store an array that will be passed
   // as a parameter in entry hook
   dex::u4 array_reg = 1;
-  // if we need to boxing, this register stores result of boxing
-  dex::u4 boxing_reg = needsBoxingReg ? 2 : 0;
+  // stores result of boxing (if it's needed); also stores the method signature string
+  dex::u4 value_reg = 2;
   // array size bytecode
   auto const_size_op = code_ir->Alloc<lir::Bytecode>();
   const_size_op->opcode = dex::OP_CONST;
   const_size_op->operands.push_back(code_ir->Alloc<lir::VReg>(array_size_reg));
-  const_size_op->operands.push_back(code_ir->Alloc<lir::Const32>(param_types.size() + !is_static));
+  const_size_op->operands.push_back(code_ir->Alloc<lir::Const32>(
+      2 + param_types.size())); // method signature + params + "this" object
   code_ir->instructions.InsertBefore(bytecode, const_size_op);
 
   // allocate array
@@ -260,11 +262,12 @@ bool EntryHook::InjectArrayParamsHook(lir::CodeIr* code_ir, lir::Bytecode* bytec
   // fill the array with parameters passed into function
 
   std::vector<ir::Type*> types;
+  types.push_back(builder.GetType("Ljava/lang/String;")); // method signature string
   if (!is_static) {
-    types.push_back(ir_method->decl->parent);
+    types.push_back(ir_method->decl->parent); // "this" object
   }
 
-  types.insert(types.end(), param_types.begin(), param_types.end());
+  types.insert(types.end(), param_types.begin(), param_types.end()); // parameters
 
   // register where params start
   dex::u4 current_reg = ir_method->code->registers - ir_method->code->ins_count;
@@ -273,9 +276,20 @@ bool EntryHook::InjectArrayParamsHook(lir::CodeIr* code_ir, lir::Bytecode* bytec
   int i = 0;
   for (auto type: types) {
     dex::u4 src_reg = 0;
-    if (type->GetCategory() != ir::Type::Category::Reference) {
-      BoxValue(bytecode, code_ir, type, current_reg, boxing_reg);
-      src_reg = boxing_reg;
+    if (i == 0) { // method signature string
+      // e.g. const-string v2, "(I[Ljava/lang/String;)Ljava/lang/String;"
+      // for (int, String[]) -> String
+      auto const_str_op = code_ir->Alloc<lir::Bytecode>();
+      const_str_op->opcode = dex::OP_CONST_STRING;
+      const_str_op->operands.push_back(code_ir->Alloc<lir::VReg>(value_reg)); // dst
+      auto method_label = builder.GetAsciiString(MethodLabel(ir_method).c_str());
+      const_str_op->operands.push_back(
+          code_ir->Alloc<lir::String>(method_label, method_label->orig_index)); // src
+      code_ir->instructions.InsertBefore(bytecode, const_str_op);
+      src_reg = value_reg;
+    } else if (type->GetCategory() != ir::Type::Category::Reference) {
+      BoxValue(bytecode, code_ir, type, current_reg, value_reg);
+      src_reg = value_reg;
       current_reg += 1 + (type->GetCategory() == ir::Type::Category::WideScalar);
     } else {
       src_reg = current_reg;
@@ -294,6 +308,10 @@ bool EntryHook::InjectArrayParamsHook(lir::CodeIr* code_ir, lir::Bytecode* bytec
     aput_op->operands.push_back(code_ir->Alloc<lir::VReg>(array_reg));
     aput_op->operands.push_back(code_ir->Alloc<lir::VReg>(array_index_reg));
     code_ir->instructions.InsertBefore(bytecode, aput_op);
+
+    // if function is static, then jumping over index 1
+    //  since null should be be passed in this case
+    if (i == 1 && is_static) i++;
   }
 
   std::vector<ir::Type*> hook_param_types;
@@ -336,7 +354,7 @@ bool ExitHook::Apply(lir::CodeIr* code_ir) {
   ir::Builder builder(code_ir->dex_ir);
   const auto ir_method = code_ir->ir_method;
   const auto declared_return_type = ir_method->decl->prototype->return_type;
-  bool return_as_object = tweak_ == Tweak::ReturnAsObject;
+  bool return_as_object = (tweak_ & Tweak::ReturnAsObject) != 0;
   // do we have a void-return method?
   bool return_void = (::strcmp(declared_return_type->descriptor->c_str(), "V") == 0);
   // returnAsObject supports only object return type;
@@ -345,8 +363,12 @@ bool ExitHook::Apply(lir::CodeIr* code_ir) {
   const auto return_type = return_as_object ? builder.GetType("Ljava/lang/Object;")
       : declared_return_type;
 
+  bool pass_method_signature = (tweak_ & Tweak::PassMethodSignature) != 0;
   // construct the hook method declaration
   std::vector<ir::Type*> param_types;
+  if (pass_method_signature) {
+    param_types.push_back(builder.GetType("Ljava/lang/String;"));
+  }
   if (!return_void) {
     param_types.push_back(return_type);
   }
@@ -371,7 +393,6 @@ bool ExitHook::Apply(lir::CodeIr* code_ir) {
     dex::Opcode move_result_opcode = dex::OP_NOP;
     dex::u4 reg = 0;
     int reg_count = 0;
-
     switch (bytecode->opcode) {
       case dex::OP_RETURN_VOID:
         SLICER_CHECK(return_void);
@@ -399,8 +420,62 @@ bool ExitHook::Apply(lir::CodeIr* code_ir) {
         continue;
     }
 
-    // invoke hook bytecode
-    auto args = code_ir->Alloc<lir::VRegRange>(reg, reg_count);
+    dex::u4 scratch_reg = 0;
+    // load method signature into scratch_reg
+    if (pass_method_signature) {
+      // is there a register that can be overtaken
+      bool needsScratchReg = ir_method->code->registers < reg_count + 1;
+      if (needsScratchReg) {
+        // don't renumber registers underneath us
+        slicer::AllocateScratchRegs alloc_regs(1, false);
+        alloc_regs.Apply(code_ir);
+      }
+
+      // we need use one register before results to put signature there
+      // however result starts in register 0, thefore it is shifted
+      // to register 1
+      if (reg == 0 && bytecode->opcode != dex::OP_RETURN_VOID) {
+        auto move_op = code_ir->Alloc<lir::Bytecode>();
+        switch (bytecode->opcode) {
+          case dex::OP_RETURN_OBJECT:
+            move_op->opcode = dex::OP_MOVE_OBJECT_16;
+            move_op->operands.push_back(code_ir->Alloc<lir::VReg>(reg + 1));
+            move_op->operands.push_back(code_ir->Alloc<lir::VReg>(reg));
+            break;
+          case dex::OP_RETURN:
+            move_op->opcode = dex::OP_MOVE_16;
+            move_op->operands.push_back(code_ir->Alloc<lir::VReg>(reg + 1));
+            move_op->operands.push_back(code_ir->Alloc<lir::VReg>(reg));
+            break;
+          case dex::OP_RETURN_WIDE:
+            move_op->opcode = dex::OP_MOVE_WIDE_16;
+            move_op->operands.push_back(code_ir->Alloc<lir::VRegPair>(reg + 1));
+            move_op->operands.push_back(code_ir->Alloc<lir::VRegPair>(reg));
+            break;
+          default:
+            SLICER_FATAL("Unexpected opcode %d", bytecode->opcode);
+        }
+        code_ir->instructions.InsertBefore(bytecode, move_op);
+        // return is the last call, return is shifted to one, so taking over 0 registry
+        scratch_reg = 0;
+      } else {
+        // return is the last call, so we're taking over previous registry
+        scratch_reg = bytecode->opcode == dex::OP_RETURN_VOID ? 0 : reg - 1;
+      }
+
+
+      // return is the last call, so we're taking over previous registry
+      auto method_label = builder.GetAsciiString(MethodLabel(ir_method).c_str());
+      auto const_str_op = code_ir->Alloc<lir::Bytecode>();
+      const_str_op->opcode = dex::OP_CONST_STRING;
+      const_str_op->operands.push_back(code_ir->Alloc<lir::VReg>(scratch_reg)); // dst
+      const_str_op->operands.push_back(code_ir->Alloc<lir::String>(method_label, method_label->orig_index)); // src
+      code_ir->instructions.InsertBefore(bytecode, const_str_op);
+    }
+
+    auto args = pass_method_signature
+        ? code_ir->Alloc<lir::VRegRange>(scratch_reg, reg_count + 1)
+        : code_ir->Alloc<lir::VRegRange>(reg, reg_count);
     auto hook_invoke = code_ir->Alloc<lir::Bytecode>();
     hook_invoke->opcode = dex::OP_INVOKE_STATIC_RANGE;
     hook_invoke->operands.push_back(args);
@@ -420,7 +495,7 @@ bool ExitHook::Apply(lir::CodeIr* code_ir) {
       move_result->operands.push_back(bytecode->operands[0]);
       code_ir->instructions.InsertBefore(bytecode, move_result);
 
-      if (tweak_ == Tweak::ReturnAsObject) {
+      if ((tweak_ & Tweak::ReturnAsObject) != 0) {
         auto check_cast = code_ir->Alloc<lir::Bytecode>();
         check_cast->opcode = dex::OP_CHECK_CAST;
         check_cast->operands.push_back(code_ir->Alloc<lir::VReg>(reg));
