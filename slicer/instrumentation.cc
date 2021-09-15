@@ -165,7 +165,12 @@ bool EntryHook::Apply(lir::CodeIr* code_ir) {
 
 void GenerateShiftParamsCode(lir::CodeIr* code_ir, lir::Instruction* position, dex::u4 shift) {
   const auto ir_method = code_ir->ir_method;
-  SLICER_CHECK(ir_method->code->ins_count > 0);
+
+  // Since the goal is to relocate the registers when extra scratch registers are needed,
+  // if there are no parameters this is a no-op.
+  if (ir_method->code->ins_count == 0) {
+    return;
+  }
 
   // build a param list with the explicit "this" argument for non-static methods
   std::vector<ir::Type*> param_types;
