@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "common.h"
-#include "buffer.h"
 #include "arrayview.h"
+#include "buffer.h"
+#include "common.h"
 #include "dex_format.h"
 #include "dex_ir.h"
 
