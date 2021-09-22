@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include "common.h"
 #include "arrayview.h"
-#include "memview.h"
+#include "common.h"
 #include "dex_leb128.h"
+#include "memview.h"
 
 #include <assert.h>
 #include <string>

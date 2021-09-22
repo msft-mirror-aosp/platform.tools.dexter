@@ -16,10 +16,10 @@
 
 #pragma once
 
+#include "slicer/control_flow_graph.h"
 #include "slicer/common.h"
 #include "slicer/code_ir.h"
 #include "slicer/dex_ir.h"
-#include "slicer/control_flow_graph.h"
 
 #include <memory>
 

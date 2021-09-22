@@ -15,6 +15,7 @@
  */
 
 #include "dexter.h"
+
 #include "experimental.h"
 #include "slicer/common.h"
 #include "slicer/scopeguard.h"
@@ -24,7 +25,6 @@
 
 #include <getopt.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <memory>
 #include <sstream>
 #include <map>

@@ -15,6 +15,7 @@
  */
 
 #include "slicer/bytecode_encoder.h"
+
 #include "slicer/common.h"
 #include "slicer/chronometer.h"
 
