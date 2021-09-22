@@ -15,17 +15,16 @@
  */
 
 #include "slicer/dex_ir.h"
+
 #include "slicer/chronometer.h"
 #include "slicer/dex_utf8.h"
 #include "slicer/dex_format.h"
 
-#include <algorithm>
 #include <cstdint>
-#include <map>
+#include <algorithm>
 #include <memory>
-#include <vector>
 #include <sstream>
-#include <functional>
+#include <vector>
 
 namespace ir {
 
