@@ -19,6 +19,9 @@
 #include "slicer/common.h"
 
 #include <assert.h>
+#include <sstream>
+#include <iomanip>
+
 
 namespace lir {
 
@@ -111,8 +114,12 @@ bool DebugInfoEncoder::Visit(DbgInfoAnnotation* dbg_annotation) {
       }
     } break;
 
-    default:
-      SLICER_FATAL("Unexpected debug info opcode: 0x%02x", dbg_annotation->dbg_opcode);
+    default: {
+       std::stringstream ss("Unexpected debug info opcode: 0x");
+       ss << std::hex << std::setfill('0') << std::setw(2);
+       ss << dbg_annotation->dbg_opcode;
+       SLICER_FATAL(ss.str());
+    }
   }
 
   return true;
