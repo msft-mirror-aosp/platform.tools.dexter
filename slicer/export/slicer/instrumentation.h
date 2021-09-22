@@ -22,9 +22,9 @@
 #include "dex_ir_builder.h"
 
 #include <memory>
-#include <vector>
-#include <utility>
 #include <set>
+#include <utility>
+#include <vector>
 
 namespace slicer {
 
