@@ -15,8 +15,9 @@
  */
 
 #include "slicer/reader.h"
-#include "slicer/dex_bytecode.h"
+
 #include "slicer/chronometer.h"
+#include "slicer/dex_bytecode.h"
 #include "slicer/dex_leb128.h"
 
 #include <assert.h>

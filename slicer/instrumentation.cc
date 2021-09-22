@@ -15,6 +15,7 @@
  */
 
 #include "slicer/instrumentation.h"
+
 #include "slicer/dex_ir_builder.h"
 
 namespace slicer {

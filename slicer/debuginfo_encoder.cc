@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "slicer/common.h"
 #include "slicer/debuginfo_encoder.h"
-#include "slicer/chronometer.h"
+
+#include "slicer/common.h"
 
 #include <assert.h>
 
