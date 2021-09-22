@@ -15,9 +15,9 @@
  */
 
 #include "slicer/dex_bytecode.h"
+
 #include "slicer/common.h"
 
-#include <assert.h>
 #include <array>
 
 namespace dex {

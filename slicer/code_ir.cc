@@ -14,21 +14,18 @@
  * limitations under the License.
  */
 
-#include "slicer/common.h"
 #include "slicer/code_ir.h"
+
+#include "slicer/bytecode_encoder.h"
+#include "slicer/common.h"
+#include "slicer/debuginfo_encoder.h"
 #include "slicer/dex_bytecode.h"
 #include "slicer/dex_format.h"
 #include "slicer/dex_ir.h"
 #include "slicer/dex_leb128.h"
-#include "slicer/bytecode_encoder.h"
-#include "slicer/debuginfo_encoder.h"
 #include "slicer/tryblocks_encoder.h"
 
-#include <assert.h>
-#include <string.h>
 #include <algorithm>
-#include <cstdlib>
-#include <type_traits>
 #include <vector>
 
 namespace lir {
