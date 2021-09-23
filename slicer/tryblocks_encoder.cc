@@ -15,10 +15,9 @@
  */
 
 #include "slicer/tryblocks_encoder.h"
+
 #include "slicer/chronometer.h"
 #include "slicer/common.h"
-
-#include <assert.h>
 
 namespace lir {
 

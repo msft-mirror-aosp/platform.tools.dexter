@@ -15,10 +15,12 @@
  */
 
 #include "slicer/dex_bytecode.h"
+
 #include "slicer/common.h"
 
-#include <assert.h>
 #include <array>
+#include <iomanip>
+#include <sstream>
 
 namespace dex {
 
@@ -302,8 +304,13 @@ Instruction DecodeInstruction(const u2* bytecode) {
       dec.vB_wide = FetchU8(bytecode + 1);
       return dec;
   }
-  SLICER_FATAL("Can't decode unexpected format 0x%02x (op=0x%02x)", format,
-               opcode);
+
+  std::stringstream ss("Can't decode unexpected format 0x");
+  ss << std::hex << std::setfill('0') << std::setw(2) << format;
+  ss << " (op=0x";
+  ss << std::hex << std::setfill('0') << std::setw(2) << opcode << ")";
+  SLICER_FATAL(ss.str())
 }
+
 
 }  // namespace dex
