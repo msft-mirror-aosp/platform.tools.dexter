@@ -15,7 +15,10 @@
  */
 
 #include "slicer/instrumentation.h"
+
 #include "slicer/dex_ir_builder.h"
+
+#include <sstream>
 
 namespace slicer {
 
@@ -165,7 +168,12 @@ bool EntryHook::Apply(lir::CodeIr* code_ir) {
 
 void GenerateShiftParamsCode(lir::CodeIr* code_ir, lir::Instruction* position, dex::u4 shift) {
   const auto ir_method = code_ir->ir_method;
-  SLICER_CHECK(ir_method->code->ins_count > 0);
+
+  // Since the goal is to relocate the registers when extra scratch registers are needed,
+  // if there are no parameters this is a no-op.
+  if (ir_method->code->ins_count == 0) {
+    return;
+  }
 
   // build a param list with the explicit "this" argument for non-static methods
   std::vector<ir::Type*> param_types;
@@ -452,8 +460,11 @@ bool ExitHook::Apply(lir::CodeIr* code_ir) {
             move_op->operands.push_back(code_ir->Alloc<lir::VRegPair>(reg + 1));
             move_op->operands.push_back(code_ir->Alloc<lir::VRegPair>(reg));
             break;
-          default:
-            SLICER_FATAL("Unexpected opcode %d", bytecode->opcode);
+          default: {
+              std::stringstream ss("Unexpected bytecode opcode ");
+              ss << bytecode->opcode;
+              SLICER_FATAL(ss.str())
+            }
         }
         code_ir->instructions.InsertBefore(bytecode, move_op);
         // return is the last call, return is shifted to one, so taking over 0 registry

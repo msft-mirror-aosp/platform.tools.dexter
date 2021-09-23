@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <string>
+
 namespace slicer {
 
 // Encapsulate the runtime check and error reporting policy.
@@ -34,8 +36,8 @@ void _weakCheckFailed(const char* expr, int line, const char* file);
 #define SLICER_WEAK_CHECK(expr) do { if(!(expr)) slicer::_weakCheckFailed(#expr, __LINE__, __FILE__); } while(false)
 
 // Report a fatal condition with a printf-formatted message
-void _fatal(const char* format, ...) __attribute__((noreturn));
-#define SLICER_FATAL(format, ...) slicer::_fatal("\nSLICER_FATAL: " format "\n\n", ##__VA_ARGS__);
+void _fatal(const std::string& msg) __attribute__((noreturn));
+#define SLICER_FATAL(msg) slicer::_fatal(msg);
 
 // Annotation customization point for extra validation / state.
 #ifdef NDEBUG
@@ -51,6 +53,12 @@ void _fatal(const char* format, ...) __attribute__((noreturn));
 #define FALLTHROUGH_INTENDED
 #endif // __clang__
 #endif // FALLTHROUGH_INTENDED
+
+typedef void (*logger_type)(const std::string&);
+
+// By default, slicer prints error messages to stdout. Users can set their own
+// callback.
+void set_logger(const logger_type new_logger);
 
 } // namespace slicer
 
