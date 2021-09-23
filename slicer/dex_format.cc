@@ -15,10 +15,11 @@
  */
 
 #include "slicer/dex_format.h"
+
 #include "slicer/common.h"
 
-#include <zlib.h>
 #include <sstream>
+#include <zlib.h>
 
 namespace dex {
 

@@ -15,6 +15,7 @@
  */
 
 #include "slicer/writer.h"
+
 #include "slicer/common.h"
 #include "slicer/scopeguard.h"
 #include "slicer/dex_bytecode.h"
@@ -25,7 +26,6 @@
 #include <assert.h>
 #include <type_traits>
 #include <vector>
-#include <cstdlib>
 #include <string.h>
 #include <algorithm>
 

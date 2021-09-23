@@ -15,6 +15,7 @@
  */
 
 #include "dexter.h"
+
 #include "experimental.h"
 #include "slicer/common.h"
 #include "slicer/scopeguard.h"
@@ -24,10 +25,11 @@
 
 #include <getopt.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <memory>
 #include <sstream>
 #include <map>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 // Converts a class name to a type descriptor
 // (ex. "java.lang.String" to "Ljava/lang/String;")
@@ -315,6 +317,14 @@ bool Dexter::CreateNewImage(std::shared_ptr<ir::DexFile> dex_ir) {
 int Dexter::ProcessDex() {
   if (verbose_) {
     printf("\nReading: %s\n", dex_filename_);
+  }
+
+  // check that target is a file
+  struct stat path_stat;
+  stat(dex_filename_, &path_stat);
+  if (!S_ISREG(path_stat.st_mode)) {
+    printf("ERROR: Path (%s) is not a regular file.\n", dex_filename_);
+    return 1;
   }
 
   // open input file
