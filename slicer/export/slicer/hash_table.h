@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include <vector>
 #include <cstdint>
 #include <memory>
+#include <vector>
 
 namespace slicer {
 
