@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 
-#include "slicer/common.h"
 #include "slicer/code_ir.h"
+
+#include "slicer/bytecode_encoder.h"
+#include "slicer/common.h"
+#include "slicer/debuginfo_encoder.h"
 #include "slicer/dex_bytecode.h"
 #include "slicer/dex_format.h"
 #include "slicer/dex_ir.h"
 #include "slicer/dex_leb128.h"
-#include "slicer/bytecode_encoder.h"
-#include "slicer/debuginfo_encoder.h"
 #include "slicer/tryblocks_encoder.h"
 
-#include <assert.h>
-#include <string.h>
 #include <algorithm>
-#include <cstdlib>
-#include <type_traits>
+#include <iomanip>
+#include <sstream>
 #include <vector>
 
 namespace lir {
@@ -572,8 +571,12 @@ Bytecode* CodeIr::DecodeBytecode(const dex::u2* ptr, dex::u4 offset) {
           instr->operands.push_back(Alloc<Const64>(dex::u8(dex_instr.vB) << 48));
           break;
 
-        default:
-          SLICER_FATAL("Unexpected opcode 0x%02x", dex_instr.opcode);
+        default: {
+          std::stringstream ss("Unexpected opcode 0x");
+          ss << std::hex << std::setfill('0'); ss << std::setw(2);
+          ss <<  dex_instr.opcode;
+          SLICER_FATAL(ss.str())
+        }
       }
       break;
 
@@ -582,8 +585,12 @@ Bytecode* CodeIr::DecodeBytecode(const dex::u2* ptr, dex::u4 offset) {
       instr->operands.push_back(Alloc<Const64>(dex_instr.vB_wide));
       break;
 
-    default:
-      SLICER_FATAL("Unexpected bytecode format (opcode 0x%02x)", dex_instr.opcode);
+    default: {
+      std::stringstream ss("Unexpected bytecode format (opcode 0x");
+      ss << std::hex << std::setfill('0') <<  dex_instr.opcode;
+      ss << ")";
+      SLICER_FATAL(ss.str())
+    }
   }
 
   return instr;
@@ -608,7 +615,9 @@ IndexedOperand* CodeIr::GetIndexedOperand(dex::InstructionIndexType index_type,
       return Alloc<Method>(dex_ir->methods_map[index], index);
 
     default:
-      SLICER_FATAL("Unexpected index type 0x%02x", index_type);
+      std::stringstream ss("Unexpected index type 0x");
+      ss << std::hex << std::setfill('0') << std::setw(2) << index_type;
+      SLICER_FATAL(ss.str())
   }
 }
 
