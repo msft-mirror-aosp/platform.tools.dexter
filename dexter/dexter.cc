@@ -52,7 +52,7 @@ void Dexter::PrintHelp() {
   printf(" -l : list the classes defined in the dex file\n");
   printf(" -v : verbose output\n");
   printf(" -o : output a new .dex file\n");
-  printf(" -d : dissasemble method bodies\n");
+  printf(" -d : disassemble method bodies\n");
   printf(" -m : print .dex layout map\n");
   printf(" --cfg : generate control flow graph (compact|verbose)\n");
   printf("\n");
@@ -60,10 +60,10 @@ void Dexter::PrintHelp() {
 
 int Dexter::Run() {
   // names for the CFG options
-  const std::map<std::string, DexDissasembler::CfgType> cfg_type_names = {
-    { "none", DexDissasembler::CfgType::None },
-    { "compact", DexDissasembler::CfgType::Compact },
-    { "verbose", DexDissasembler::CfgType::Verbose },
+  const std::map<std::string, DexDisassembler::CfgType> cfg_type_names = {
+    { "none", DexDisassembler::CfgType::None },
+    { "compact", DexDisassembler::CfgType::Compact },
+    { "verbose", DexDisassembler::CfgType::Verbose },
   };
 
   // long cmdline options
@@ -99,7 +99,7 @@ int Dexter::Run() {
         extract_class_ = ::optarg;
         break;
       case 'd':
-        dissasemble_ = true;
+        disassemble_ = true;
         break;
       case 'm':
         print_map_ = true;
@@ -393,9 +393,9 @@ int Dexter::ProcessDex() {
     experimental::Run(experiment, dex_ir);
   }
 
-  // dissasemble method bodies?
-  if (dissasemble_) {
-    DexDissasembler disasm(dex_ir, cfg_type_);
+  // disassemble method bodies?
+  if (disassemble_) {
+    DexDisassembler disasm(dex_ir, cfg_type_);
     disasm.DumpAllMethods();
   }
 
