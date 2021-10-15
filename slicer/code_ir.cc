@@ -559,6 +559,30 @@ Bytecode* CodeIr::DecodeBytecode(const dex::u2* ptr, dex::u4 offset) {
       instr->operands.push_back(GetIndexedOperand(index_type, dex_instr.vB));
     } break;
 
+    case dex::k45cc: // op {vC, vD, vE, vF, vG}, thing@BBBB, other@HHHH
+    {
+      auto vreg_list = Alloc<VRegList>();
+      SLICER_CHECK(dex_instr.vA <= 4);
+      for (dex::u4 i = 0; i < dex_instr.vA; ++i) {
+        vreg_list->registers.push_back(dex_instr.arg[i]);
+      }
+      instr->operands.push_back(vreg_list);
+      instr->operands.push_back(GetIndexedOperand(index_type, dex_instr.vB));
+      dex::u4 vH = dex_instr.arg[4];
+      auto proto_operand = GetSecondIndexedOperand(index_type, vH);
+      instr->operands.push_back(proto_operand);
+    } break;
+
+    case dex::k4rcc:  // op {vCCCC .. v(CCCC+AA-1)}, thing@BBBB, other@HHHH
+    {
+      auto vreg_range = Alloc<VRegRange>(dex_instr.vC, dex_instr.vA);
+      instr->operands.push_back(vreg_range);
+      instr->operands.push_back(GetIndexedOperand(index_type, dex_instr.vB));
+      dex::u4 vH = dex_instr.arg[4];
+      auto proto_operand = GetSecondIndexedOperand(index_type, vH);
+      instr->operands.push_back(proto_operand);
+    } break;
+
     case dex::k21h:  // op vAA, #+BBBB0000[00000000]
       switch (dex_instr.opcode) {
         case dex::OP_CONST_HIGH16:
@@ -586,8 +610,9 @@ Bytecode* CodeIr::DecodeBytecode(const dex::u2* ptr, dex::u4 offset) {
       break;
 
     default: {
-      std::stringstream ss("Unexpected bytecode format (opcode 0x");
-      ss << std::hex << std::setfill('0') <<  dex_instr.opcode;
+      std::stringstream ss;
+      ss << "Unexpected bytecode format (opcode 0x";
+      ss << std::hex << std::setfill('0') << static_cast<int>(dex_instr.opcode);
       ss << ")";
       SLICER_FATAL(ss.str())
     }
@@ -612,6 +637,7 @@ IndexedOperand* CodeIr::GetIndexedOperand(dex::InstructionIndexType index_type,
       return Alloc<Field>(dex_ir->fields_map[index], index);
 
     case dex::kIndexMethodRef:
+    case dex::kIndexMethodAndProtoRef:
       return Alloc<Method>(dex_ir->methods_map[index], index);
 
     default:
@@ -619,6 +645,14 @@ IndexedOperand* CodeIr::GetIndexedOperand(dex::InstructionIndexType index_type,
       ss << std::hex << std::setfill('0') << std::setw(2) << index_type;
       SLICER_FATAL(ss.str())
   }
+}
+
+// Get the second indexed object (if any).
+IndexedOperand* CodeIr::GetSecondIndexedOperand(dex::InstructionIndexType index_type,
+                                                dex::u4 index) {
+  SLICER_CHECK(index != dex::kNoIndex);
+  SLICER_CHECK(index_type == dex::kIndexMethodAndProtoRef);
+  return Alloc<Proto>(dex_ir->protos_map[index], index);
 }
 
 // Get a type based on its index (potentially kNoIndex)
