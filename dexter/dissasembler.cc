@@ -218,6 +218,13 @@ bool PrintCodeIrVisitor::Visit(lir::Method* method) {
   return true;
 }
 
+bool PrintCodeIrVisitor::Visit(lir::Proto* proto) {
+  SLICER_CHECK(proto->index != dex::kNoIndex);
+  auto ir_proto = proto->ir_proto;
+  printf("%s", MethodDeclaration(ir_proto).c_str());
+  return true;
+}
+
 bool PrintCodeIrVisitor::Visit(lir::LineNumber* line_number) {
   printf("%d", line_number->line);
   return true;
