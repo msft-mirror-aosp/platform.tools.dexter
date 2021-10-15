@@ -882,6 +882,7 @@ void Reader::ParseInstructions(slicer::ArrayView<const dex::u2> code) {
     auto dex_instr = dex::DecodeInstruction(ptr);
 
     dex::u4 index = dex::kNoIndex;
+    dex::u4 index2 = dex::kNoIndex;
     switch (dex::GetFormatFromOpcode(dex_instr.opcode)) {
       case dex::k20bc:
       case dex::k21c:
@@ -889,6 +890,12 @@ void Reader::ParseInstructions(slicer::ArrayView<const dex::u2> code) {
       case dex::k35c:
       case dex::k3rc:
         index = dex_instr.vB;
+        break;
+
+      case dex::k45cc:
+      case dex::k4rcc:
+        index = dex_instr.vB;
+        index2 = dex_instr.arg[4];
         break;
 
       case dex::k22c:
@@ -914,6 +921,11 @@ void Reader::ParseInstructions(slicer::ArrayView<const dex::u2> code) {
 
       case dex::kIndexMethodRef:
         GetMethodDecl(index);
+        break;
+
+      case dex::kIndexMethodAndProtoRef:
+        GetMethodDecl(index);
+        GetProto(index2);
         break;
 
       default:
