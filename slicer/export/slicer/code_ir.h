@@ -66,6 +66,7 @@ struct String;
 struct Type;
 struct Field;
 struct Method;
+struct Proto;
 struct DbgInfoHeader;
 struct LineNumber;
 struct DbgInfoAnnotation;
@@ -102,6 +103,7 @@ class Visitor {
   virtual bool Visit(Type* type) { return false; }
   virtual bool Visit(Field* field) { return false; }
   virtual bool Visit(Method* method) { return false; }
+  virtual bool Visit(Proto* proto) { return false; }
   virtual bool Visit(LineNumber* line) { return false; }
 };
 
@@ -212,7 +214,17 @@ struct Field : public IndexedOperand {
 struct Method : public IndexedOperand {
   ir::MethodDecl* ir_method;
 
-  Method(ir::MethodDecl* ir_method, dex::u4 index) : IndexedOperand(index), ir_method(ir_method) {}
+  Method(ir::MethodDecl* ir_method, dex::u4 index) : IndexedOperand(index), ir_method(ir_method) {
+    SLICER_CHECK(ir_method != nullptr);
+  }
+
+  virtual bool Accept(Visitor* visitor) override { return visitor->Visit(this); }
+};
+
+struct Proto : public IndexedOperand {
+  ir::Proto* ir_proto;
+
+  Proto(ir::Proto* ir_proto, dex::u4 index) : IndexedOperand(index), ir_proto(ir_proto) {}
 
   virtual bool Accept(Visitor* visitor) override { return visitor->Visit(this); }
 };
@@ -441,6 +453,7 @@ struct CodeIr {
   Bytecode* DecodeBytecode(const dex::u2* ptr, dex::u4 offset);
 
   IndexedOperand* GetIndexedOperand(dex::InstructionIndexType index_type, dex::u4 index);
+  IndexedOperand* GetSecondIndexedOperand(dex::InstructionIndexType index_type, dex::u4 index);
 
   Type* GetType(dex::u4 index);
   String* GetString(dex::u4 index);
