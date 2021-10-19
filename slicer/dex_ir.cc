@@ -139,7 +139,7 @@ void DexFile::TopSortClassIndex(Class* irClass, dex::u4* nextIndex) {
       }
     }
 
-    SLICER_CHECK(*nextIndex < classes.size());
+    SLICER_CHECK_LT(*nextIndex, classes.size());
     irClass->index = (*nextIndex)++;
   }
 }
@@ -255,8 +255,8 @@ void DexFile::Normalize() {
   SortClassIndexes();
 
   IndexItems(classes, [&](const own<Class>& a, const own<Class>& b) {
-    SLICER_CHECK(a->index < classes.size());
-    SLICER_CHECK(b->index < classes.size());
+    SLICER_CHECK_LT(a->index, classes.size());
+    SLICER_CHECK_LT(b->index, classes.size());
     SLICER_CHECK(a->index != b->index || a == b);
     return a->index < b->index;
   });
