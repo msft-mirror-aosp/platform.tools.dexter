@@ -18,6 +18,7 @@
 
 #include "slicer/dex_ir_builder.h"
 
+#include <iomanip>
 #include <sstream>
 
 namespace slicer {
@@ -461,9 +462,9 @@ bool ExitHook::Apply(lir::CodeIr* code_ir) {
             move_op->operands.push_back(code_ir->Alloc<lir::VRegPair>(reg));
             break;
           default: {
-              std::stringstream ss("Unexpected bytecode opcode ");
-              ss << bytecode->opcode;
-              SLICER_FATAL(ss.str())
+              std::stringstream ss;
+              ss <<"Unexpected bytecode opcode: " << bytecode->opcode;
+              SLICER_FATAL(ss.str());
             }
         }
         code_ir->instructions.InsertBefore(bytecode, move_op);

@@ -454,8 +454,8 @@ Bytecode* CodeIr::DecodeBytecode(const dex::u2* ptr, dex::u4 offset) {
   instr->opcode = dex_instr.opcode;
 
   auto index_type = dex::GetIndexTypeFromOpcode(dex_instr.opcode);
-
-  switch (dex::GetFormatFromOpcode(dex_instr.opcode)) {
+  auto format = dex::GetFormatFromOpcode(dex_instr.opcode);
+  switch (format) {
     case dex::k10x:  // op
       break;
 
@@ -596,10 +596,9 @@ Bytecode* CodeIr::DecodeBytecode(const dex::u2* ptr, dex::u4 offset) {
           break;
 
         default: {
-          std::stringstream ss("Unexpected opcode 0x");
-          ss << std::hex << std::setfill('0'); ss << std::setw(2);
-          ss <<  dex_instr.opcode;
-          SLICER_FATAL(ss.str())
+          std::stringstream ss;
+          ss << "Unexpected opcode: " << dex_instr.opcode;
+          SLICER_FATAL(ss.str());
         }
       }
       break;
@@ -611,10 +610,8 @@ Bytecode* CodeIr::DecodeBytecode(const dex::u2* ptr, dex::u4 offset) {
 
     default: {
       std::stringstream ss;
-      ss << "Unexpected bytecode format (opcode 0x";
-      ss << std::hex << std::setfill('0') << static_cast<int>(dex_instr.opcode);
-      ss << ")";
-      SLICER_FATAL(ss.str())
+      ss << "Unexpected bytecode format " << format << " for opcode " << dex_instr.opcode;
+      SLICER_FATAL(ss.str());
     }
   }
 
@@ -641,9 +638,10 @@ IndexedOperand* CodeIr::GetIndexedOperand(dex::InstructionIndexType index_type,
       return Alloc<Method>(dex_ir->methods_map[index], index);
 
     default:
-      std::stringstream ss("Unexpected index type 0x");
+      std::stringstream ss;
+      ss << "Unexpected index type 0x";
       ss << std::hex << std::setfill('0') << std::setw(2) << index_type;
-      SLICER_FATAL(ss.str())
+      SLICER_FATAL(ss.str());
   }
 }
 
