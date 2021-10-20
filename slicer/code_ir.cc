@@ -55,7 +55,7 @@ void CodeIr::Assemble() {
   try_blocks_encoder.Encode(ir_code, dex_ir);
 }
 
-void CodeIr::DissasembleTryBlocks(const ir::Code* ir_code) {
+void CodeIr::DisassembleTryBlocks(const ir::Code* ir_code) {
   int nextTryBlockId = 1;
   for (const auto& tryBlock : ir_code->try_blocks) {
     auto try_block_begin = Alloc<TryBlockBegin>();
@@ -105,7 +105,7 @@ void CodeIr::DissasembleTryBlocks(const ir::Code* ir_code) {
   }
 }
 
-void CodeIr::DissasembleDebugInfo(const ir::DebugInfo* ir_debug_info) {
+void CodeIr::DisassembleDebugInfo(const ir::DebugInfo* ir_debug_info) {
   if (ir_debug_info == nullptr) {
     return;
   }
@@ -235,7 +235,7 @@ void CodeIr::DissasembleDebugInfo(const ir::DebugInfo* ir_debug_info) {
   }
 }
 
-void CodeIr::DissasembleBytecode(const ir::Code* ir_code) {
+void CodeIr::DisassembleBytecode(const ir::Code* ir_code) {
   const dex::u2* begin = ir_code->instructions.begin();
   const dex::u2* end = ir_code->instructions.end();
   const dex::u2* ptr = begin;
@@ -312,7 +312,7 @@ static void MergeInstructions(I_LIST& instructions, const E_LIST& extra) {
   }
 }
 
-void CodeIr::Dissasemble() {
+void CodeIr::Disassemble() {
   nodes_.clear();
   labels_.clear();
 
@@ -328,13 +328,13 @@ void CodeIr::Dissasemble() {
   }
 
   // decode the .dex bytecodes
-  DissasembleBytecode(ir_code);
+  DisassembleBytecode(ir_code);
 
   // try/catch blocks
-  DissasembleTryBlocks(ir_code);
+  DisassembleTryBlocks(ir_code);
 
   // debug information
-  DissasembleDebugInfo(ir_code->debug_info);
+  DisassembleDebugInfo(ir_code->debug_info);
 
   // fixup switches
   FixupSwitches();
