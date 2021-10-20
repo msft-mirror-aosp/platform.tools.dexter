@@ -562,9 +562,14 @@ Bytecode* CodeIr::DecodeBytecode(const dex::u2* ptr, dex::u4 offset) {
     case dex::k45cc: // op {vC, vD, vE, vF, vG}, thing@BBBB, other@HHHH
     {
       auto vreg_list = Alloc<VRegList>();
-      SLICER_CHECK(dex_instr.vA <= 4);
-      for (dex::u4 i = 0; i < dex_instr.vA; ++i) {
-        vreg_list->registers.push_back(dex_instr.arg[i]);
+      SLICER_CHECK(dex_instr.vA <= 5);
+      // vC if necessary.
+      if (dex_instr.vA > 1) {
+        vreg_list->registers.push_back(dex_instr.vC);
+      }
+      // Add vD,vE,vF,vG as necessary.
+      for (dex::u4 i = 1; i < dex_instr.vA; ++i) {
+        vreg_list->registers.push_back(dex_instr.arg[i - 1]);
       }
       instr->operands.push_back(vreg_list);
       instr->operands.push_back(GetIndexedOperand(index_type, dex_instr.vB));
