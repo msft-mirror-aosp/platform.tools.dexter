@@ -405,6 +405,48 @@ bool BytecodeEncoder::Visit(Bytecode* bytecode) {
       bytecode_.Push<dex::u2>(Pack_16((B >> 48) & 0xffff));
     } break;
 
+    case dex::k45cc:  // op {vC, vD, vE, vF, vG}, thing@BBBB, other@HHHH
+    {
+      SLICER_CHECK(bytecode->operands.size() == 3);
+      const auto& regs = bytecode->CastOperand<VRegList>(0)->registers;
+      dex::u4 A = regs.size();
+      dex::u4 B = bytecode->CastOperand<IndexedOperand>(1)->index;
+      dex::u4 H = bytecode->CastOperand<IndexedOperand>(2)->index;
+      dex::u4 C = (A > 0) ? regs[0] : 0;
+      dex::u4 D = (A > 1) ? regs[1] : 0;
+      dex::u4 E = (A > 2) ? regs[2] : 0;
+      dex::u4 F = (A > 3) ? regs[3] : 0;
+      dex::u4 G = (A > 4) ? regs[4] : 0;
+      bytecode_.Push<dex::u2>(Pack_4_4_8(A, G, opcode));
+      bytecode_.Push<dex::u2>(Pack_16(B));
+      bytecode_.Push<dex::u2>(Pack_4_4_4_4(F, E, D, C));
+      bytecode_.Push<dex::u2>(Pack_16(H));
+
+      // keep track of the outs_count
+      if ((dex::GetFlagsFromOpcode(opcode) & dex::kInvoke) != 0) {
+        outs_count_ = std::max(outs_count_, A);
+      }
+    } break;
+
+    case dex::k4rcc:  // op {vCCCC .. v(CCCC+AA-1)}, thing@BBBB, other@HHHH
+    {
+      SLICER_CHECK(bytecode->operands.size() == 3);
+      auto vreg_range = bytecode->CastOperand<VRegRange>(0);
+      dex::u4 A = vreg_range->count;
+      dex::u4 B = bytecode->CastOperand<IndexedOperand>(1)->index;
+      dex::u4 C = vreg_range->base_reg;
+      dex::u4 H = bytecode->CastOperand<IndexedOperand>(2)->index;
+      bytecode_.Push<dex::u2>(Pack_8_8(A, opcode));
+      bytecode_.Push<dex::u2>(Pack_16(B));
+      bytecode_.Push<dex::u2>(Pack_16(C));
+      bytecode_.Push<dex::u2>(Pack_16(H));
+
+      // keep track of the outs_count
+      if ((dex::GetFlagsFromOpcode(opcode) & dex::kInvoke) != 0) {
+        outs_count_ = std::max(outs_count_, A);
+      }
+    } break;
+
     case dex::k21h:  // op vAA, #+BBBB0000[00000000]
       SLICER_CHECK(bytecode->operands.size() == 2);
       switch (opcode) {
@@ -423,16 +465,16 @@ bool BytecodeEncoder::Visit(Bytecode* bytecode) {
         } break;
 
         default: {
-          std::stringstream ss("Unexpected fmt21h opcode: 0x");
-          ss << std::hex << std::setfill('0') << std::setw(2) <<  opcode;
+          std::stringstream ss;
+          ss << "Unexpected fmt21h opcode: " << opcode;
           SLICER_FATAL(ss.str());
         }
       }
       break;
 
     default: {
-      std::stringstream ss("Unexpected format: 0x");
-      ss << std::hex << std::setfill('0') << std::setw(2) << format;
+      std::stringstream ss;
+      ss << "Unexpected format: " << format;
       SLICER_FATAL(ss.str());
     }
   }

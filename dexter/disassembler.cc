@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "dissasembler.h"
+#include "disassembler.h"
 
 #include <stdio.h>
 #include <cinttypes>
@@ -218,6 +218,13 @@ bool PrintCodeIrVisitor::Visit(lir::Method* method) {
   return true;
 }
 
+bool PrintCodeIrVisitor::Visit(lir::Proto* proto) {
+  SLICER_CHECK(proto->index != dex::kNoIndex);
+  auto ir_proto = proto->ir_proto;
+  printf("%s", MethodDeclaration(ir_proto).c_str());
+  return true;
+}
+
 bool PrintCodeIrVisitor::Visit(lir::LineNumber* line_number) {
   printf("%d", line_number->line);
   return true;
@@ -308,22 +315,22 @@ bool PrintCodeIrVisitor::Visit(lir::DbgInfoAnnotation* annotation) {
   return true;
 }
 
-void DexDissasembler::DumpAllMethods() const {
+void DexDisassembler::DumpAllMethods() const {
   for (auto& ir_method : dex_ir_->encoded_methods) {
     DumpMethod(ir_method.get());
   }
 }
 
-void DexDissasembler::DumpMethod(ir::EncodedMethod* ir_method) const {
+void DexDisassembler::DumpMethod(ir::EncodedMethod* ir_method) const {
   printf("\nmethod %s.%s%s\n{\n",
          ir_method->decl->parent->Decl().c_str(),
          ir_method->decl->name->c_str(),
          MethodDeclaration(ir_method->decl->prototype).c_str());
-  Dissasemble(ir_method);
+  Disassemble(ir_method);
   printf("}\n");
 }
 
-void DexDissasembler::Dissasemble(ir::EncodedMethod* ir_method) const {
+void DexDisassembler::Disassemble(ir::EncodedMethod* ir_method) const {
   lir::CodeIr code_ir(ir_method, dex_ir_);
   std::unique_ptr<lir::ControlFlowGraph> cfg;
   switch (cfg_type_) {
