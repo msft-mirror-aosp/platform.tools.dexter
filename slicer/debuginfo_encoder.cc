@@ -115,10 +115,9 @@ bool DebugInfoEncoder::Visit(DbgInfoAnnotation* dbg_annotation) {
     } break;
 
     default: {
-       std::stringstream ss("Unexpected debug info opcode: 0x");
-       ss << std::hex << std::setfill('0') << std::setw(2);
-       ss << dbg_annotation->dbg_opcode;
-       SLICER_FATAL(ss.str());
+      std::stringstream ss;
+      ss << "Unexpected debug info opcode: " << dbg_annotation->dbg_opcode;
+      SLICER_FATAL(ss.str());
     }
   }
 

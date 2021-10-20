@@ -465,16 +465,16 @@ bool BytecodeEncoder::Visit(Bytecode* bytecode) {
         } break;
 
         default: {
-          std::stringstream ss("Unexpected fmt21h opcode: 0x");
-          ss << std::hex << std::setfill('0') << std::setw(2) <<  opcode;
+          std::stringstream ss;
+          ss << "Unexpected fmt21h opcode: " << opcode;
           SLICER_FATAL(ss.str());
         }
       }
       break;
 
     default: {
-      std::stringstream ss("Unexpected format: 0x");
-      ss << std::hex << std::setfill('0') << std::setw(2) << format;
+      std::stringstream ss;
+      ss << "Unexpected format: " << format;
       SLICER_FATAL(ss.str());
     }
   }
