@@ -37,7 +37,7 @@ void _weakCheckFailed(const char* expr, int line, const char* file);
 
 // Report a fatal condition with a printf-formatted message
 void _fatal(const std::string& msg) __attribute__((noreturn));
-#define SLICER_FATAL(msg) slicer::_fatal(msg);
+#define SLICER_FATAL(msg) slicer::_fatal(msg)
 
 // Annotation customization point for extra validation / state.
 #ifdef NDEBUG
