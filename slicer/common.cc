@@ -28,6 +28,7 @@ namespace slicer {
 
 static void log_(const std::string& msg) {
   printf("%s", msg.c_str());
+  fflush(stdout);
 }
 
 static logger_type log = log_;
