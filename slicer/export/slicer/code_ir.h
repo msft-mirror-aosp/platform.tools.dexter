@@ -415,7 +415,7 @@ struct CodeIr {
  public:
   CodeIr(ir::EncodedMethod* ir_method, std::shared_ptr<ir::DexFile> dex_ir)
       : ir_method(ir_method), dex_ir(dex_ir) {
-    Dissasemble();
+    Disassemble();
   }
 
   // No copy/move semantics
@@ -438,10 +438,10 @@ struct CodeIr {
   }
 
  private:
-  void Dissasemble();
-  void DissasembleBytecode(const ir::Code* ir_code);
-  void DissasembleTryBlocks(const ir::Code* ir_code);
-  void DissasembleDebugInfo(const ir::DebugInfo* ir_debug_info);
+  void Disassemble();
+  void DisassembleBytecode(const ir::Code* ir_code);
+  void DisassembleTryBlocks(const ir::Code* ir_code);
+  void DisassembleDebugInfo(const ir::DebugInfo* ir_debug_info);
 
   void FixupSwitches();
   void FixupPackedSwitch(PackedSwitchPayload* instr, dex::u4 base_offset, const dex::u2* ptr);

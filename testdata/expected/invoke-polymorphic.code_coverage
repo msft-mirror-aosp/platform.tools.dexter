@@ -233,7 +233,7 @@ method Main.main(java.lang.String[]):void
 	   24| const-string v3, "+[String2]"
 	   26| const v0, #+37 (0x00000025 | 5.18480e-44)
 	   29| invoke-static/range {v0..v0}, CodeCoverage.TraceBasicBlock(int):void
-	   32| invoke-polymorphic {v3,v1,v0}, java.lang.invoke.MethodHandle.invokeExact(java.lang.Object[]):java.lang.Object, (java.lang.String, java.lang.String):java.lang.String
+	   32| invoke-polymorphic {v1,v2,v3}, java.lang.invoke.MethodHandle.invokeExact(java.lang.Object[]):java.lang.Object, (java.lang.String, java.lang.String):java.lang.String
 	   36| move-result-object v4
 	   37| const v0, #+38 (0x00000026 | 5.32493e-44)
 	   40| invoke-static/range {v0..v0}, CodeCoverage.TraceBasicBlock(int):void
@@ -250,7 +250,7 @@ method Main.main(java.lang.String[]):void
 	   70| const-string v2, "[String1]"
 	   72| const v0, #+42 (0x0000002a | 5.88545e-44)
 	   75| invoke-static/range {v0..v0}, CodeCoverage.TraceBasicBlock(int):void
-	   78| invoke-polymorphic {v1,v0}, java.lang.invoke.MethodHandle.invokeExact(java.lang.Object[]):java.lang.Object, (java.lang.Object):java.lang.String
+	   78| invoke-polymorphic {v1,v2}, java.lang.invoke.MethodHandle.invokeExact(java.lang.Object[]):java.lang.Object, (java.lang.Object):java.lang.String
 	   82| move-result-object v4
 	   83| const v0, #+43 (0x0000002b | 6.02558e-44)
 	   86| invoke-static/range {v0..v0}, CodeCoverage.TraceBasicBlock(int):void
@@ -270,7 +270,7 @@ method Main.main(java.lang.String[]):void
 	  124| const-string v3, "+[String2]"
 	  126| const v0, #+48 (0x00000030 | 6.72623e-44)
 	  129| invoke-static/range {v0..v0}, CodeCoverage.TraceBasicBlock(int):void
-	  132| invoke-polymorphic {v3,v1,v0}, java.lang.invoke.MethodHandle.invoke(java.lang.Object[]):java.lang.Object, (java.lang.Object, java.lang.Object):java.lang.String
+	  132| invoke-polymorphic {v1,v2,v3}, java.lang.invoke.MethodHandle.invoke(java.lang.Object[]):java.lang.Object, (java.lang.Object, java.lang.Object):java.lang.String
 	  136| move-result-object v4
 	  137| const v0, #+49 (0x00000031 | 6.86636e-44)
 	  140| invoke-static/range {v0..v0}, CodeCoverage.TraceBasicBlock(int):void
@@ -285,7 +285,7 @@ method Main.main(java.lang.String[]):void
 	  164| const v0, #+52 (0x00000034 | 7.28675e-44)
 	  167| invoke-static/range {v0..v0}, CodeCoverage.TraceBasicBlock(int):void
 	  170| const-wide v2:v3, #+42 (0x000000000000002a | 2.07508e-322)
-	  175| invoke-polymorphic {v3,v1,v0}, java.lang.invoke.MethodHandle.invokeExact(java.lang.Object[]):java.lang.Object, (long):java.lang.String
+	  175| invoke-polymorphic {v1,v2,v3}, java.lang.invoke.MethodHandle.invokeExact(java.lang.Object[]):java.lang.Object, (long):java.lang.String
 	  179| move-result-object v4
 	  180| const v0, #+53 (0x00000035 | 7.42688e-44)
 	  183| invoke-static/range {v0..v0}, CodeCoverage.TraceBasicBlock(int):void
@@ -296,7 +296,7 @@ method Main.main(java.lang.String[]):void
 	  197| const v0, #+55 (0x00000037 | 7.70714e-44)
 	  200| invoke-static/range {v0..v0}, CodeCoverage.TraceBasicBlock(int):void
 	  203| const v2, #+40 (0x00000028 | 5.60519e-44)
-	  206| invoke-polymorphic {v1,v0}, java.lang.invoke.MethodHandle.invoke(java.lang.Object[]):java.lang.Object, (int):java.lang.String
+	  206| invoke-polymorphic {v1,v2}, java.lang.invoke.MethodHandle.invoke(java.lang.Object[]):java.lang.Object, (int):java.lang.String
 	  210| move-result-object v4
 	  211| const v0, #+56 (0x00000038 | 7.84727e-44)
 	  214| invoke-static/range {v0..v0}, CodeCoverage.TraceBasicBlock(int):void
@@ -313,7 +313,7 @@ method Main.main(java.lang.String[]):void
 	  247| invoke-direct {v2,v3,v4}, java.lang.Long.<init>(long):void
 	  250| const v0, #+60 (0x0000003c | 8.40779e-44)
 	  253| invoke-static/range {v0..v0}, CodeCoverage.TraceBasicBlock(int):void
-	  256| invoke-polymorphic {v1,v0}, java.lang.invoke.MethodHandle.invoke(java.lang.Object[]):java.lang.Object, (java.lang.Long):java.lang.String
+	  256| invoke-polymorphic {v1,v2}, java.lang.invoke.MethodHandle.invoke(java.lang.Object[]):java.lang.Object, (java.lang.Long):java.lang.String
 	  260| move-result-object v4
 	  261| const v0, #+61 (0x0000003d | 8.54792e-44)
 	  264| invoke-static/range {v0..v0}, CodeCoverage.TraceBasicBlock(int):void
@@ -330,7 +330,7 @@ method Main.main(java.lang.String[]):void
 	  295| invoke-direct {v2,v3}, java.lang.Integer.<init>(int):void
 	  298| const v0, #+65 (0x00000041 | 9.10844e-44)
 	  301| invoke-static/range {v0..v0}, CodeCoverage.TraceBasicBlock(int):void
-	  304| invoke-polymorphic {v1,v0}, java.lang.invoke.MethodHandle.invoke(java.lang.Object[]):java.lang.Object, (java.lang.Integer):java.lang.String
+	  304| invoke-polymorphic {v1,v2}, java.lang.invoke.MethodHandle.invoke(java.lang.Object[]):java.lang.Object, (java.lang.Integer):java.lang.String
 	  308| move-result-object v4
 	  309| const v0, #+66 (0x00000042 | 9.24857e-44)
 	  312| invoke-static/range {v0..v0}, CodeCoverage.TraceBasicBlock(int):void
@@ -351,7 +351,7 @@ method Main.main(java.lang.String[]):void
 	  355| invoke-direct {v2,v3,v4}, java.lang.Long.<init>(long):void
 	  358| const v0, #+71 (0x00000047 | 9.94922e-44)
 	  361| invoke-static/range {v0..v0}, CodeCoverage.TraceBasicBlock(int):void
-	  364| invoke-polymorphic {v2,v1,v0}, java.lang.invoke.MethodHandle.invoke(java.lang.Object[]):java.lang.Object, (java.lang.Long, java.lang.Long):int
+	  364| invoke-polymorphic {v1,v2,v2}, java.lang.invoke.MethodHandle.invoke(java.lang.Object[]):java.lang.Object, (java.lang.Long, java.lang.Long):int
 	  368| move-result v4
 	  369| const v0, #+72 (0x00000048 | 1.00893e-43)
 	  372| invoke-static/range {v0..v0}, CodeCoverage.TraceBasicBlock(int):void
@@ -362,7 +362,7 @@ method Main.main(java.lang.String[]):void
 	  386| const v0, #+74 (0x0000004a | 1.03696e-43)
 	  389| invoke-static/range {v0..v0}, CodeCoverage.TraceBasicBlock(int):void
 	  392| const-wide v3:v4, #+44 (0x000000000000002c | 2.17389e-322)
-	  397| invoke-polymorphic {v3,v4,v1,v0}, java.lang.invoke.MethodHandle.invoke(java.lang.Object[]):java.lang.Object, (java.lang.Long, long):int
+	  397| invoke-polymorphic {v1,v2,v3,v4}, java.lang.invoke.MethodHandle.invoke(java.lang.Object[]):java.lang.Object, (java.lang.Long, long):int
 	  401| move-result v4
 	  402| const v0, #+75 (0x0000004b | 1.05097e-43)
 	  405| invoke-static/range {v0..v0}, CodeCoverage.TraceBasicBlock(int):void
