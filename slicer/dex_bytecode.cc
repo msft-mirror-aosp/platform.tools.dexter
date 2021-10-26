@@ -246,7 +246,7 @@ Instruction DecodeInstruction(const u2* bytecode) {
       switch (dec.vA) {
         case 5:
           // A fifth arg is verboten for inline invokes
-          SLICER_CHECK(format != k35mi);
+          SLICER_CHECK_NE(format, k35mi);
 
           // Per note at the top of this format decoder, the
           // fifth argument comes from the A field in the
