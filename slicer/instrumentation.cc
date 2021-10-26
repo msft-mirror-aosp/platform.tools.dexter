@@ -68,7 +68,7 @@ void BoxValue(lir::Bytecode* bytecode,
       boxed_type_name = "Ljava/lang/Double;";
       break;
   }
-  SLICER_CHECK(boxed_type_name != nullptr);
+  SLICER_CHECK_NE(boxed_type_name, nullptr);
 
   ir::Builder builder(code_ir->dex_ir);
   std::vector<ir::Type*> param_types;
@@ -188,7 +188,7 @@ void GenerateShiftParamsCode(lir::CodeIr* code_ir, lir::Instruction* position, d
 
   const dex::u4 regs = ir_method->code->registers;
   const dex::u4 ins_count = ir_method->code->ins_count;
-  SLICER_CHECK(regs >= ins_count);
+  SLICER_CHECK_GE(regs, ins_count);
 
   // generate the args "relocation" instructions
   dex::u4 reg = regs - ins_count;
@@ -604,7 +604,7 @@ dex::Opcode DetourInterfaceInvoke::GetNewOpcode(dex::Opcode opcode) {
 class RegsRenumberVisitor : public lir::Visitor {
  public:
   explicit RegsRenumberVisitor(int shift) : shift_(shift) {
-    SLICER_CHECK(shift > 0);
+    SLICER_CHECK_GT(shift, 0);
   }
 
  private:
@@ -654,7 +654,7 @@ class RegsRenumberVisitor : public lir::Visitor {
 //  make existing bytecodes "unencodable" (if they have 4 bit reg fields)
 //
 void AllocateScratchRegs::RegsRenumbering(lir::CodeIr* code_ir) {
-  SLICER_CHECK(left_to_allocate_ > 0);
+  SLICER_CHECK_GT(left_to_allocate_, 0);
   int delta = std::min(left_to_allocate_,
                        16 - static_cast<int>(code_ir->ir_method->code->registers));
   if (delta < 1) {
@@ -683,7 +683,7 @@ void AllocateScratchRegs::RegsRenumbering(lir::CodeIr* code_ir) {
 //
 void AllocateScratchRegs::ShiftParams(lir::CodeIr* code_ir) {
   const auto ir_method = code_ir->ir_method;
-  SLICER_CHECK(left_to_allocate_ > 0);
+  SLICER_CHECK_GT(left_to_allocate_, 0);
 
   const dex::u4 shift = left_to_allocate_;
   Allocate(code_ir, ir_method->code->registers, left_to_allocate_);
@@ -714,7 +714,7 @@ void AllocateScratchRegs::Allocate(lir::CodeIr* code_ir, dex::u4 first_reg, int 
 bool AllocateScratchRegs::Apply(lir::CodeIr* code_ir) {
   const auto code = code_ir->ir_method->code;
   // .dex bytecode allows up to 64k vregs
-  SLICER_CHECK(code->registers + allocate_count_ <= (1 << 16));
+  SLICER_CHECK_LE(code->registers + allocate_count_, (1 << 16));
 
   scratch_regs_.clear();
   left_to_allocate_ = allocate_count_;
@@ -742,7 +742,7 @@ bool AllocateScratchRegs::Apply(lir::CodeIr* code_ir) {
 }
 
 bool MethodInstrumenter::InstrumentMethod(ir::EncodedMethod* ir_method) {
-  SLICER_CHECK(ir_method != nullptr);
+  SLICER_CHECK_NE(ir_method, nullptr);
   if (ir_method->code == nullptr) {
     // can't instrument abstract methods
     return false;
