@@ -28,6 +28,7 @@ namespace slicer {
 
 static void log_(const std::string& msg) {
   printf("%s", msg.c_str());
+  fflush(stdout);
 }
 
 static logger_type log = log_;
@@ -42,6 +43,26 @@ void _checkFailed(const char* expr, int line, const char* file) {
   ss << std::endl << "SLICER_CHECK failed [";
   ss << expr << "] at " << file << ":" << line;
   ss << std::endl << std::endl;
+  log(ss.str());
+  abort();
+}
+
+void _checkFailedOp(const void* lhs, const void* rhs, const char* op, const char* suffix, int line,
+                    const char* file) {
+  std::stringstream ss;
+  ss << std::endl << "SLICER_CHECK_" << suffix << " failed [";
+  ss << lhs << " " << op << " " << rhs;
+  ss << "] at " << file << ":" << line;
+  log(ss.str());
+  abort();
+}
+
+void _checkFailedOp(uint32_t lhs, uint32_t rhs, const char* op, const char* suffix, int line,
+                    const char* file) {
+  std::stringstream ss;
+  ss << std::endl << "SLICER_CHECK_" << suffix << " failed [";
+  ss << lhs << " " << op << " " << rhs;
+  ss << "] at " << file << ":" << line;
   log(ss.str());
   abort();
 }

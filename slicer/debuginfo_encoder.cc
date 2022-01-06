@@ -34,7 +34,7 @@ bool DebugInfoEncoder::Visit(DbgInfoHeader* dbg_header) {
 bool DebugInfoEncoder::Visit(DbgInfoAnnotation* dbg_annotation) {
   // keep the address in sync
   if (last_address_ != dbg_annotation->offset) {
-    SLICER_CHECK(dbg_annotation->offset > last_address_);
+    SLICER_CHECK_GT(dbg_annotation->offset, last_address_);
     dbginfo_.Push<dex::u1>(dex::DBG_ADVANCE_PC);
     dbginfo_.PushULeb128(dbg_annotation->offset - last_address_);
     last_address_ = dbg_annotation->offset;
@@ -52,7 +52,7 @@ bool DebugInfoEncoder::Visit(DbgInfoAnnotation* dbg_annotation) {
         // it's not perfectly clear from the .dex specification
         // if initial line == 0 is valid, but a number of existing
         // .dex files do this so we have to support it
-        SLICER_CHECK(line >= 0);
+        SLICER_CHECK_GE(line, 0);
         line_start_ = line;
       } else {
         SLICER_WEAK_CHECK(line > 0);
@@ -115,10 +115,9 @@ bool DebugInfoEncoder::Visit(DbgInfoAnnotation* dbg_annotation) {
     } break;
 
     default: {
-       std::stringstream ss("Unexpected debug info opcode: 0x");
-       ss << std::hex << std::setfill('0') << std::setw(2);
-       ss << dbg_annotation->dbg_opcode;
-       SLICER_FATAL(ss.str());
+      std::stringstream ss;
+      ss << "Unexpected debug info opcode: " << dbg_annotation->dbg_opcode;
+      SLICER_FATAL(ss.str());
     }
   }
 
@@ -129,11 +128,11 @@ void DebugInfoEncoder::Encode(ir::EncodedMethod* ir_method, std::shared_ptr<ir::
   auto ir_debug_info = ir_method->code->debug_info;
 
   SLICER_CHECK(dbginfo_.empty());
-  SLICER_CHECK(param_names_ == nullptr);
-  SLICER_CHECK(line_start_ == 0);
-  SLICER_CHECK(last_line_ == 0);
-  SLICER_CHECK(last_address_ == 0);
-  SLICER_CHECK(source_file_ == nullptr);
+  SLICER_CHECK_EQ(param_names_, nullptr);
+  SLICER_CHECK_EQ(line_start_, 0);
+  SLICER_CHECK_EQ(last_line_, 0);
+  SLICER_CHECK_EQ(last_address_, 0);
+  SLICER_CHECK_EQ(source_file_, nullptr);
 
   // generate new debug info
   source_file_ = ir_method->decl->parent->class_def->source_file;
