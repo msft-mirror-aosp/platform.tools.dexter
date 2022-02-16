@@ -15,6 +15,7 @@
  */
 
 #include "slicer/control_flow_graph.h"
+#include "slicer/chronometer.h"
 
 namespace lir {
 
