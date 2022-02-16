@@ -15,16 +15,17 @@
  */
 
 #include "slicer/dex_ir.h"
-
 #include "slicer/chronometer.h"
 #include "slicer/dex_utf8.h"
 #include "slicer/dex_format.h"
 
-#include <cstdint>
 #include <algorithm>
+#include <cstdint>
+#include <map>
 #include <memory>
-#include <sstream>
 #include <vector>
+#include <sstream>
+#include <functional>
 
 namespace ir {
 
@@ -139,7 +140,7 @@ void DexFile::TopSortClassIndex(Class* irClass, dex::u4* nextIndex) {
       }
     }
 
-    SLICER_CHECK_LT(*nextIndex, classes.size());
+    SLICER_CHECK(*nextIndex < classes.size());
     irClass->index = (*nextIndex)++;
   }
 }
@@ -255,8 +256,8 @@ void DexFile::Normalize() {
   SortClassIndexes();
 
   IndexItems(classes, [&](const own<Class>& a, const own<Class>& b) {
-    SLICER_CHECK_LT(a->index, classes.size());
-    SLICER_CHECK_LT(b->index, classes.size());
+    SLICER_CHECK(a->index < classes.size());
+    SLICER_CHECK(b->index < classes.size());
     SLICER_CHECK(a->index != b->index || a == b);
     return a->index < b->index;
   });
