@@ -6,7 +6,7 @@ cc_binary {
     name: "dexter",
     srcs: [
         "dexter.cc",
-        "disassembler.cc",
+        "dissasembler.cc",
         "experimental.cc",
         "main.cc",
     ],
