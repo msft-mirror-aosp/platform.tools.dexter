@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include "slicer/control_flow_graph.h"
 #include "slicer/common.h"
 #include "slicer/code_ir.h"
 #include "slicer/dex_ir.h"
+#include "slicer/control_flow_graph.h"
 
 #include <memory>
 
@@ -46,7 +46,6 @@ class PrintCodeIrVisitor : public lir::Visitor {
   virtual bool Visit(lir::Type* type) override;
   virtual bool Visit(lir::Field* field) override;
   virtual bool Visit(lir::Method* method) override;
-  virtual bool Visit(lir::Proto* proto) override;
   virtual bool Visit(lir::LineNumber* line) override;
   virtual bool Visit(lir::DbgInfoHeader* dbg_header) override;
   virtual bool Visit(lir::DbgInfoAnnotation* dbg_annotation) override;
@@ -62,27 +61,27 @@ class PrintCodeIrVisitor : public lir::Visitor {
   size_t current_block_index_ = 0;
 };
 
-// A .dex bytecode disassembler using lir::CodeIr
-class DexDisassembler {
+// A .dex bytecode dissasembler using lir::CodeIr
+class DexDissasembler {
  public:
-  // The type of CFG (Control Flow Graph) used by the disassembler:
+  // The type of CFG (Control Flow Graph) used by the dissasembler:
   //    None    - no CFG, plain listing
   //    Compact - CFG with non-exceptional flow only
   //    Verbose - CFG modeling the EH control flow too
   enum class CfgType { None, Compact, Verbose };
 
  public:
-  explicit DexDisassembler(std::shared_ptr<ir::DexFile> dex_ir, CfgType cfg_type = CfgType::None)
+  explicit DexDissasembler(std::shared_ptr<ir::DexFile> dex_ir, CfgType cfg_type = CfgType::None)
       : dex_ir_(dex_ir), cfg_type_(cfg_type) {}
 
-  DexDisassembler(const DexDisassembler&) = delete;
-  DexDisassembler& operator=(const DexDisassembler&) = delete;
+  DexDissasembler(const DexDissasembler&) = delete;
+  DexDissasembler& operator=(const DexDissasembler&) = delete;
 
   void DumpAllMethods() const;
   void DumpMethod(ir::EncodedMethod* ir_method) const;
 
  private:
-  void Disassemble(ir::EncodedMethod* ir_method) const;
+  void Dissasemble(ir::EncodedMethod* ir_method) const;
 
  private:
   std::shared_ptr<ir::DexFile> dex_ir_;
