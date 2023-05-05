@@ -642,6 +642,9 @@ IndexedOperand* CodeIr::GetIndexedOperand(dex::InstructionIndexType index_type,
     case dex::kIndexMethodAndProtoRef:
       return Alloc<Method>(dex_ir->methods_map[index], index);
 
+    case dex::kIndexMethodHandleRef:
+      return Alloc<MethodHandle>(dex_ir->method_handles_map[index], index);
+
     default:
       std::stringstream ss;
       ss << "Unexpected index type 0x";
