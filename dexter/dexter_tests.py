@@ -30,7 +30,7 @@ test_cases = {
   'asm'              : { 'args' : '-d', 'input' : ['*.dex'] },
   'hello_stats'      : { 'args' : '-s -e Hello', 'input' : ['hello.dex'] },
   'am_stats'         : { 'args' : '-s -e android.app.ActivityManager', 'input' : ['large.dex'] },
-  'rewrite'          : { 'args' : '-d -x full_rewrite', 'input' : ['*.dex'], 'skip' : ['method_handles.dex'] },
+  'rewrite'          : { 'args' : '-d -x full_rewrite', 'input' : ['*.dex'] },
   'entry_hook'       : { 'args' : '-d -x stress_entry_hook', 'input' : [
                           'entry_hooks.dex', 'hello.dex', 'medium.dex', 'min.dex' ] },
   'exit_hook'        : { 'args' : '-d -x stress_exit_hook', 'input' : [
@@ -42,16 +42,12 @@ test_cases = {
                           'hello.dex', 'entry_hooks.dex', 'medium.dex', 'large.dex', 'try_catch.dex' ] },
   'verbose_cfg'      : { 'args' : '-d --cfg=verbose', 'input' : ['*.dex'] },
   'compact_cfg'      : { 'args' : '-d --cfg=compact', 'input' : ['*.dex'] },
-  'scratch_regs'     : { 'args' : '-d -x stress_scratch_regs', 'input' : ['*.dex'], 'skip' : ['method_handles.dex'] },
-  'regs_usage'       : { 'args' : '-x regs_histogram', 'input' : ['*.dex'], 'skip' : ['method_handles.dex'] },
-  'code_coverage'    : { 'args' : '-d -x code_coverage', 'input' : ['*.dex'], 'skip' : ['method_handles.dex'] },
+  'scratch_regs'     : { 'args' : '-d -x stress_scratch_regs', 'input' : ['*.dex'] },
+  'regs_usage'       : { 'args' : '-x regs_histogram', 'input' : ['*.dex'] },
+  'code_coverage'    : { 'args' : '-d -x code_coverage', 'input' : ['*.dex'] },
   'array_entry_hook' : { 'args' : '-d -x array_param_entry_hook', 'input' : ['mi.dex'] },
   'object_exit_hook' : { 'args' : '-d -x return_obj_exit_hook', 'input' : ['mi.dex'] },
   'sign_exit_hook'   : { 'args' : '-d -x pass_sign_exit_hook', 'input' : ['mi.dex'] },
-  'method_handle_extract_one_asm'
-                     : { 'args' : '-d -x ExampleJavaJniFuzzer', 'input' : ['method_handles.dex'] },
-  'method_handle_extract_two_asm'
-                     : { 'args' : '-d -x com/example/ExampleJavaHelper', 'input': ['method_handles.dex'] }
 }
 
 # run a shell command and returns the stdout content
@@ -73,19 +69,11 @@ failures = 0
 #
 #    'hello.dex' -> 'expected/hello.map'
 #
-for test_name, test_config in sorted(test_cases.items()):
+for test_name, test_config in sorted(test_cases.iteritems()):
   for input_pattern in test_config['input']:
     input_files = glob.glob(os.path.join(data_root, input_pattern))
-    skip_set = set()
-    if 'skip' in test_config.keys():
-      for skip_file in test_config['skip']:
-        skip_set.add(os.path.join(data_root, skip_file))
-
 
     for input in input_files:
-      if input in skip_set:
-        continue
-
       tests = tests + 1
 
       # run dexter with the test arguments

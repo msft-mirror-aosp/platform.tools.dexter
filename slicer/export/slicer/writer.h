@@ -135,7 +135,6 @@ class Writer {
           field_ids(dex::kFieldIdItem),
           method_ids(dex::kMethodIdItem),
           class_defs(dex::kClassDefItem),
-          method_handles(dex::kMethodHandleItem),
           string_data(dex::kStringDataItem),
           type_lists(dex::kTypeList),
           debug_info(dex::kDebugInfoItem),
@@ -154,7 +153,6 @@ class Writer {
     Index<dex::FieldId> field_ids;
     Index<dex::MethodId> method_ids;
     Index<dex::ClassDef> class_defs;
-    Index<dex::MethodHandle> method_handles;
 
     Section string_data;
     Section type_lists;
@@ -207,7 +205,6 @@ class Writer {
   void FillFields();
   void FillMethods();
   void FillClassDefs();
-  void FillMethodHandles();
 
   // helpers for writing .dex structures
   dex::u4 WriteTypeList(const std::vector<ir::Type*>& types);
@@ -227,7 +224,6 @@ class Writer {
   dex::u4 MapFieldIndex(dex::u4 index) const;
   dex::u4 MapMethodIndex(dex::u4 index) const;
   dex::u4 MapProtoIndex(dex::u4 index) const;
-  dex::u4 MapMethodHandleIndex(dex::u4 index) const;
 
   // writing parts of a class definition
   void WriteInstructions(slicer::ArrayView<const dex::u2> instructions);
