@@ -67,30 +67,6 @@ slicer::ArrayView<const dex::ProtoId> Reader::ProtoIds() const {
                                header_->proto_ids_size);
 }
 
-slicer::ArrayView<const dex::MethodHandle> Reader::MethodHandles() const {
-  const dex::MapList* ml = DexMapList();
-  if(ml == nullptr){
-    slicer::ArrayView<const dex::MethodHandle> ret;
-    return ret;
-  }
-
-  // Find MethodHandle entry
-  const dex::MapItem* mi = nullptr;
-  for(int i = 0; i < ml->size; i++){
-    if(ml->list[i].type == dex::kMethodHandleItem){
-      mi = &(ml->list[i]);
-      break;
-    }
-  }
-
-  if(mi == nullptr){
-    slicer::ArrayView<const dex::MethodHandle> ret;
-    return ret;
-  }
-
-  return section<dex::MethodHandle>(mi->offset, mi->size);
-}
-
 const dex::MapList* Reader::DexMapList() const {
   return dataPtr<dex::MapList>(header_->map_off);
 }
@@ -188,22 +164,6 @@ ir::FieldDecl* Reader::GetFieldDecl(dex::u4 index) {
     p = newField;
     dex_ir_->fields_indexes.MarkUsedIndex(index);
   }
-  SLICER_CHECK_NE(p, placeholder);
-  return p;
-}
-
-ir::MethodHandle* Reader::GetMethodHandle(dex::u4 index){
-  SLICER_CHECK_NE(index, dex::kNoIndex);
-  auto& p = dex_ir_->method_handles_map[index];
-  auto placeholder = reinterpret_cast<ir::MethodHandle*>(1);
-  if(p == nullptr) {
-    p = placeholder;
-    auto newMethodHandle = ParseMethodHandle(index);
-    SLICER_CHECK_EQ(p, placeholder);
-    p = newMethodHandle;
-    dex_ir_->method_handle_indexes.MarkUsedIndex(index);
-  }
-
   SLICER_CHECK_NE(p, placeholder);
   return p;
 }
@@ -851,22 +811,6 @@ ir::FieldDecl* Reader::ParseFieldDecl(dex::u4 index) {
   return ir_field;
 }
 
-ir::MethodHandle* Reader::ParseMethodHandle(dex::u4 index){
-  auto& dex_method_handle = MethodHandles()[index];
-  auto ir_method_handle = dex_ir_->Alloc<ir::MethodHandle>();
-
-  ir_method_handle->method_handle_type = dex_method_handle.method_handle_type;
-
-  if(ir_method_handle->IsField()){
-    ir_method_handle->field = GetFieldDecl(dex_method_handle.field_or_method_id);
-  }
-  else {
-    ir_method_handle->method = GetMethodDecl(dex_method_handle.field_or_method_id);
-  }
-
-  return ir_method_handle;
-}
-
 ir::MethodDecl* Reader::ParseMethodDecl(dex::u4 index) {
   auto& dex_method = MethodIds()[index];
   auto ir_method = dex_ir_->Alloc<ir::MethodDecl>();
@@ -982,10 +926,6 @@ void Reader::ParseInstructions(slicer::ArrayView<const dex::u2> code) {
       case dex::kIndexMethodAndProtoRef:
         GetMethodDecl(index);
         GetProto(index2);
-        break;
-
-      case dex::kIndexMethodHandleRef:
-        GetMethodHandle(index);
         break;
 
       default:
