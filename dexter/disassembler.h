@@ -46,6 +46,7 @@ class PrintCodeIrVisitor : public lir::Visitor {
   virtual bool Visit(lir::Type* type) override;
   virtual bool Visit(lir::Field* field) override;
   virtual bool Visit(lir::Method* method) override;
+  virtual bool Visit(lir::MethodHandle* method_handle) override;
   virtual bool Visit(lir::Proto* proto) override;
   virtual bool Visit(lir::LineNumber* line) override;
   virtual bool Visit(lir::DbgInfoHeader* dbg_header) override;
