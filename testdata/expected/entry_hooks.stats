@@ -9,7 +9,6 @@
   proto_ids_size                : 17
   field_ids_size                : 2
   method_ids_size               : 28
-  method_handle_ids_size        : 0
   map_list_size                 : 13
 
 
@@ -22,7 +21,6 @@
   methods                       : 28
   encoded_methods               : 19
   classes                       : 4
-  method_handles                : 0
   type_lists                    : 11
   code                          : 19
   debug_info                    : 19

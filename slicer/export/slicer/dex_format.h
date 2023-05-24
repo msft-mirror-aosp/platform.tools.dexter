@@ -101,7 +101,6 @@ constexpr u2 kProtoIdItem               = 0x0003;
 constexpr u2 kFieldIdItem               = 0x0004;
 constexpr u2 kMethodIdItem              = 0x0005;
 constexpr u2 kClassDefItem              = 0x0006;
-constexpr u2 kMethodHandleItem          = 0x0008;
 constexpr u2 kMapList                   = 0x1000;
 constexpr u2 kTypeList                  = 0x1001;
 constexpr u2 kAnnotationSetRefList      = 0x1002;
@@ -126,18 +125,6 @@ constexpr u1 DBG_SET_PROLOGUE_END       = 0x07;
 constexpr u1 DBG_SET_EPILOGUE_BEGIN     = 0x08;
 constexpr u1 DBG_SET_FILE               = 0x09;
 constexpr u1 DBG_FIRST_SPECIAL          = 0x0a;
-
-
-// method handle type
-constexpr u1 METHOD_HANDLE_TYPE_STATIC_PUT = 0x00;
-constexpr u1 METHOD_HANDLE_TYPE_STATIC_GET = 0x01;
-constexpr u1 METHOD_HANDLE_TYPE_INSTANCE_PUT = 0x02;
-constexpr u1 METHOD_HANDLE_TYPE_INSTANCE_GET = 0x03;
-constexpr u1 METHOD_HANDLE_TYPE_INVOKE_STATIC = 0x04;
-constexpr u1 METHOD_HANDLE_TYPE_INVOKE_INSTANCE = 0x05;
-constexpr u1 METHOD_HANDLE_TYPE_INVOKE_CONSTRUCTOR = 0x06;
-constexpr u1 METHOD_HANDLE_TYPE_INVOKE_DIRECT = 0x07;
-constexpr u1 METHOD_HANDLE_TYPE_INVOKE_INTERFACE = 0x08;
 
 // special debug info values
 constexpr int DBG_LINE_BASE = -4;
@@ -225,14 +212,6 @@ struct ClassDef {
   u4 annotations_off;
   u4 class_data_off;
   u4 static_values_off;
-};
-
-// "method_handle_item"
-struct MethodHandle {
-  u2 method_handle_type;
-  u2 unused;
-  u2 field_or_method_id;
-  u2 unused2;
 };
 
 // "type_item"
