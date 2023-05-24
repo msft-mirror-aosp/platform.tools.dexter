@@ -53,7 +53,6 @@ class Reader {
   slicer::ArrayView<const dex::FieldId> FieldIds() const;
   slicer::ArrayView<const dex::MethodId> MethodIds() const;
   slicer::ArrayView<const dex::ProtoId> ProtoIds() const;
-  slicer::ArrayView<const dex::MethodHandle> MethodHandles() const;
   const dex::MapList* DexMapList() const;
 
   // IR creation interface
@@ -70,7 +69,6 @@ class Reader {
   ir::MethodDecl* GetMethodDecl(dex::u4 index);
   ir::Proto* GetProto(dex::u4 index);
   ir::String* GetString(dex::u4 index);
-  ir::MethodHandle* GetMethodHandle(dex::u4 index);
 
   // Parsing annotations
   ir::AnnotationsDirectory* ExtractAnnotations(dex::u4 offset);
@@ -82,7 +80,6 @@ class Reader {
   ir::ParamAnnotation* ParseParamAnnotation(const dex::u1** pptr);
   ir::EncodedField* ParseEncodedField(const dex::u1** pptr, dex::u4* baseIndex);
   ir::Annotation* ParseAnnotation(const dex::u1** pptr);
-  ir::MethodHandle* ParseMethodHandle(dex::u4 index);
 
   // Parse encoded values and arrays
   ir::EncodedValue* ParseEncodedValue(const dex::u1** pptr);
