@@ -152,9 +152,6 @@ static void PrintDexMap(const dex::Reader& reader) {
       case dex::kMethodIdItem:
         sectionName = "MethodIdItem";
         break;
-      case dex::kMethodHandleItem:
-        sectionName = "MethodHandleIdItem";
-        break;
       case dex::kClassDefItem:
         sectionName = "ClassDefItem";
         break;
@@ -213,7 +210,6 @@ static void PrintDexIrStats(std::shared_ptr<const ir::DexFile> dex_ir) {
   printf("  methods                       : %zu\n", dex_ir->methods.size());
   printf("  encoded_methods               : %zu\n", dex_ir->encoded_methods.size());
   printf("  classes                       : %zu\n", dex_ir->classes.size());
-  printf("  method_handles                : %zu\n", dex_ir->method_handles.size());
   printf("  type_lists                    : %zu\n", dex_ir->type_lists.size());
   printf("  code                          : %zu\n", dex_ir->code.size());
   printf("  debug_info                    : %zu\n", dex_ir->debug_info.size());
@@ -244,7 +240,6 @@ static void PrintDexFileStats(const dex::Reader& reader) {
   printf("  proto_ids_size                : %u\n", header->proto_ids_size);
   printf("  field_ids_size                : %u\n", header->field_ids_size);
   printf("  method_ids_size               : %u\n", header->method_ids_size);
-  printf("  method_handle_ids_size        : %lu\n", (size_t)reader.MethodHandles().size());
   printf("  map_list_size                 : %u\n", map_list->size);
   printf("\n");
 }

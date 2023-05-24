@@ -108,15 +108,6 @@ std::string Proto::Signature() const {
   return ss.str();
 }
 
-bool MethodHandle::IsField(){
-  return (
-    method_handle_type == dex::METHOD_HANDLE_TYPE_STATIC_PUT ||
-    method_handle_type == dex::METHOD_HANDLE_TYPE_STATIC_GET ||
-    method_handle_type == dex::METHOD_HANDLE_TYPE_INSTANCE_PUT ||
-    method_handle_type == dex::METHOD_HANDLE_TYPE_INSTANCE_GET
-  );
-}
-
 // Helper for IR normalization
 // (it sorts items and update the numeric idexes to match)
 template <class T, class C>
