@@ -218,6 +218,18 @@ bool PrintCodeIrVisitor::Visit(lir::Method* method) {
   return true;
 }
 
+bool PrintCodeIrVisitor::Visit(lir::MethodHandle* method_handle){
+  SLICER_CHECK_NE(method_handle->index, dex::kNoIndex);
+  auto ir_method_handle = method_handle->ir_method_handle;
+  if(ir_method_handle->IsField()){
+    printf("%s", ir_method_handle->field->name->c_str());
+  }
+  else {
+    printf("%s", ir_method_handle->method->name->c_str());
+  }
+  return true;
+}
+
 bool PrintCodeIrVisitor::Visit(lir::Proto* proto) {
   SLICER_CHECK_NE(proto->index, dex::kNoIndex);
   auto ir_proto = proto->ir_proto;
