@@ -66,6 +66,7 @@ struct String;
 struct Type;
 struct Field;
 struct Method;
+struct MethodHandle;
 struct Proto;
 struct DbgInfoHeader;
 struct LineNumber;
@@ -105,6 +106,7 @@ class Visitor {
   virtual bool Visit(Method* method) { return false; }
   virtual bool Visit(Proto* proto) { return false; }
   virtual bool Visit(LineNumber* line) { return false; }
+  virtual bool Visit(MethodHandle* mh) { return false; }
 };
 
 // The root of the polymorphic code IR nodes hierarchy
@@ -216,6 +218,16 @@ struct Method : public IndexedOperand {
 
   Method(ir::MethodDecl* ir_method, dex::u4 index) : IndexedOperand(index), ir_method(ir_method) {
     SLICER_CHECK_NE(ir_method, nullptr);
+  }
+
+  virtual bool Accept(Visitor* visitor) override { return visitor->Visit(this); }
+};
+
+struct MethodHandle : public IndexedOperand {
+  ir::MethodHandle* ir_method_handle;
+
+  MethodHandle(ir::MethodHandle* ir_method_handle, dex::u4 index) : IndexedOperand(index), ir_method_handle(ir_method_handle) {
+    SLICER_CHECK_NE(ir_method_handle, nullptr);
   }
 
   virtual bool Accept(Visitor* visitor) override { return visitor->Visit(this); }
