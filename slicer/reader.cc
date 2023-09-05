@@ -1001,14 +1001,23 @@ void Reader::ParseInstructions(slicer::ArrayView<const dex::u2> code) {
 
 // Basic .dex header structural checks
 void Reader::ValidateHeader() {
-  SLICER_CHECK_GT(size_, sizeof(dex::Header));
+  SLICER_CHECK_GT(size_, dex::Header::kV40Size);
 
   // Known issue: For performance reasons the initial size_ passed to jvmti events might be an
   // estimate. b/72402467
   SLICER_CHECK_LE(header_->file_size, size_);
-  SLICER_CHECK_EQ(header_->header_size, sizeof(dex::Header));
+  // Check that we support this version of dex header
+  SLICER_CHECK(
+      header_->header_size == dex::Header::kV40Size ||
+      header_->header_size == dex::Header::kV41Size);
   SLICER_CHECK_EQ(header_->endian_tag, dex::kEndianConstant);
   SLICER_CHECK_EQ(header_->data_size % 4, 0);
+
+  // If the dex file is within container with other dex files,
+  // adjust the base address to the start of the container.
+  SLICER_CHECK_LE(header_->ContainerSize() - header_->ContainerOff(), size_);
+  image_ -= header_->ContainerOff();
+  size_ = header_->ContainerSize();
 
   // Known issue: The fields might be slighly corrupted b/65452964
   // SLICER_CHECK_LE(header_->data_off + header_->data_size, size_);
@@ -1021,7 +1030,8 @@ void Reader::ValidateHeader() {
   SLICER_CHECK_EQ(header_->field_ids_off % 4, 0);
   SLICER_CHECK_EQ(header_->method_ids_off % 4, 0);
   SLICER_CHECK_EQ(header_->class_defs_off % 4, 0);
-  SLICER_CHECK(header_->map_off >= header_->data_off && header_->map_off < size_);
+  SLICER_CHECK_GE(header_->map_off, header_->data_off);
+  SLICER_CHECK_LT(header_->map_off, size_);
   SLICER_CHECK_EQ(header_->link_size, 0);
   SLICER_CHECK_EQ(header_->link_off, 0);
   SLICER_CHECK_EQ(header_->data_off % 4, 0);
