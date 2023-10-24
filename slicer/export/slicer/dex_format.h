@@ -145,6 +145,36 @@ constexpr int DBG_LINE_RANGE = 15;
 
 // "header_item"
 struct Header {
+  static constexpr size_t kV40Size = 0x70;  // Same as all previous dex versions.
+  static constexpr size_t kV41Size = 0x78;  // Added container_{size,off} fields.
+                                            // See http://go/dex-container-format
+  static constexpr size_t kMaxSize = kV41Size;
+
+  static constexpr u4 kV41 = 41;
+  static constexpr u4 kMinVersion = 35;  // Minimum supported dex version.
+  static constexpr u4 kMaxVersion = 41;  // Maximum supported dex version.
+
+  // Parse magic number and extract the version integer. E.g.: `dex\n123\0` returns `123`.
+  // Returns 0 upon failure.
+  static u4 GetVersion(const void* magic);
+
+  u4 GetVersion() const {
+    return GetVersion(magic);
+  }
+
+  u4 ContainerSize() const {
+    return header_size >= kV41Size ? container_size : file_size;
+  }
+
+  u4 ContainerOff() const {
+    return header_size >= kV41Size ? container_off : 0;
+  }
+
+  void SetContainer(u4 off, u4 size) {
+    container_off = off;
+    container_size = size;
+  }
+
   u1 magic[8];
   u4 checksum;
   u1 signature[kSHA1DigestLen];
@@ -168,6 +198,10 @@ struct Header {
   u4 class_defs_off;
   u4 data_size;
   u4 data_off;
+
+ private:
+  u4 container_size;
+  u4 container_off;
 };
 
 // "map_item"
