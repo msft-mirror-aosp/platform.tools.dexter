@@ -396,7 +396,7 @@ struct LineNumber : public Operand {
   int line = 0;
 
   explicit LineNumber(int line) : line(line) {
-    SLICER_WEAK_CHECK(line > 0);
+    SLICER_WEAK_CHECK(line >= 0);
   }
 
   virtual bool Accept(Visitor* visitor) override { return visitor->Visit(this); }
