@@ -155,7 +155,7 @@ void CodeIr::DisassembleDebugInfo(const ir::DebugInfo* ir_debug_info) {
       case dex::DBG_ADVANCE_LINE:
         // line_diff
         line += dex::ReadSLeb128(&ptr);
-        SLICER_WEAK_CHECK(line > 0);
+        SLICER_WEAK_CHECK(line >= 0);
         break;
 
       case dex::DBG_START_LOCAL: {
@@ -222,7 +222,7 @@ void CodeIr::DisassembleDebugInfo(const ir::DebugInfo* ir_debug_info) {
         int adjusted_opcode = opcode - dex::DBG_FIRST_SPECIAL;
         line += dex::DBG_LINE_BASE + (adjusted_opcode % dex::DBG_LINE_RANGE);
         address += (adjusted_opcode / dex::DBG_LINE_RANGE);
-        SLICER_WEAK_CHECK(line > 0);
+        SLICER_WEAK_CHECK(line >= 0);
         annotation = Alloc<DbgInfoAnnotation>(dex::DBG_ADVANCE_LINE);
         annotation->operands.push_back(Alloc<LineNumber>(line));
       } break;
