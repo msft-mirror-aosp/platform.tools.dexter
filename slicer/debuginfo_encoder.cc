@@ -55,7 +55,7 @@ bool DebugInfoEncoder::Visit(DbgInfoAnnotation* dbg_annotation) {
         SLICER_CHECK_GE(line, 0);
         line_start_ = line;
       } else {
-        SLICER_WEAK_CHECK(line > 0);
+        SLICER_WEAK_CHECK(line >= 0);
         int delta = line - last_line_;
         int adj_opcode = delta - dex::DBG_LINE_BASE;
         // out of range for special opcode?
