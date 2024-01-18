@@ -67,6 +67,30 @@ slicer::ArrayView<const dex::ProtoId> Reader::ProtoIds() const {
                                header_->proto_ids_size);
 }
 
+slicer::ArrayView<const dex::MethodHandle> Reader::MethodHandles() const {
+  const dex::MapList* ml = DexMapList();
+  if(ml == nullptr){
+    slicer::ArrayView<const dex::MethodHandle> ret;
+    return ret;
+  }
+
+  // Find MethodHandle entry
+  const dex::MapItem* mi = nullptr;
+  for(int i = 0; i < ml->size; i++){
+    if(ml->list[i].type == dex::kMethodHandleItem){
+      mi = &(ml->list[i]);
+      break;
+    }
+  }
+
+  if(mi == nullptr){
+    slicer::ArrayView<const dex::MethodHandle> ret;
+    return ret;
+  }
+
+  return section<dex::MethodHandle>(mi->offset, mi->size);
+}
+
 const dex::MapList* Reader::DexMapList() const {
   return dataPtr<dex::MapList>(header_->map_off);
 }
@@ -164,6 +188,22 @@ ir::FieldDecl* Reader::GetFieldDecl(dex::u4 index) {
     p = newField;
     dex_ir_->fields_indexes.MarkUsedIndex(index);
   }
+  SLICER_CHECK_NE(p, placeholder);
+  return p;
+}
+
+ir::MethodHandle* Reader::GetMethodHandle(dex::u4 index){
+  SLICER_CHECK_NE(index, dex::kNoIndex);
+  auto& p = dex_ir_->method_handles_map[index];
+  auto placeholder = reinterpret_cast<ir::MethodHandle*>(1);
+  if(p == nullptr) {
+    p = placeholder;
+    auto newMethodHandle = ParseMethodHandle(index);
+    SLICER_CHECK_EQ(p, placeholder);
+    p = newMethodHandle;
+    dex_ir_->method_handle_indexes.MarkUsedIndex(index);
+  }
+
   SLICER_CHECK_NE(p, placeholder);
   return p;
 }
@@ -811,6 +851,22 @@ ir::FieldDecl* Reader::ParseFieldDecl(dex::u4 index) {
   return ir_field;
 }
 
+ir::MethodHandle* Reader::ParseMethodHandle(dex::u4 index){
+  auto& dex_method_handle = MethodHandles()[index];
+  auto ir_method_handle = dex_ir_->Alloc<ir::MethodHandle>();
+
+  ir_method_handle->method_handle_type = dex_method_handle.method_handle_type;
+
+  if(ir_method_handle->IsField()){
+    ir_method_handle->field = GetFieldDecl(dex_method_handle.field_or_method_id);
+  }
+  else {
+    ir_method_handle->method = GetMethodDecl(dex_method_handle.field_or_method_id);
+  }
+
+  return ir_method_handle;
+}
+
 ir::MethodDecl* Reader::ParseMethodDecl(dex::u4 index) {
   auto& dex_method = MethodIds()[index];
   auto ir_method = dex_ir_->Alloc<ir::MethodDecl>();
@@ -928,6 +984,10 @@ void Reader::ParseInstructions(slicer::ArrayView<const dex::u2> code) {
         GetProto(index2);
         break;
 
+      case dex::kIndexMethodHandleRef:
+        GetMethodHandle(index);
+        break;
+
       default:
         break;
     }
@@ -941,14 +1001,23 @@ void Reader::ParseInstructions(slicer::ArrayView<const dex::u2> code) {
 
 // Basic .dex header structural checks
 void Reader::ValidateHeader() {
-  SLICER_CHECK_GT(size_, sizeof(dex::Header));
+  SLICER_CHECK_GT(size_, dex::Header::kV40Size);
 
   // Known issue: For performance reasons the initial size_ passed to jvmti events might be an
   // estimate. b/72402467
   SLICER_CHECK_LE(header_->file_size, size_);
-  SLICER_CHECK_EQ(header_->header_size, sizeof(dex::Header));
+  // Check that we support this version of dex header
+  SLICER_CHECK(
+      header_->header_size == dex::Header::kV40Size ||
+      header_->header_size == dex::Header::kV41Size);
   SLICER_CHECK_EQ(header_->endian_tag, dex::kEndianConstant);
   SLICER_CHECK_EQ(header_->data_size % 4, 0);
+
+  // If the dex file is within container with other dex files,
+  // adjust the base address to the start of the container.
+  SLICER_CHECK_LE(header_->ContainerSize() - header_->ContainerOff(), size_);
+  image_ -= header_->ContainerOff();
+  size_ = header_->ContainerSize();
 
   // Known issue: The fields might be slighly corrupted b/65452964
   // SLICER_CHECK_LE(header_->data_off + header_->data_size, size_);
@@ -961,7 +1030,8 @@ void Reader::ValidateHeader() {
   SLICER_CHECK_EQ(header_->field_ids_off % 4, 0);
   SLICER_CHECK_EQ(header_->method_ids_off % 4, 0);
   SLICER_CHECK_EQ(header_->class_defs_off % 4, 0);
-  SLICER_CHECK(header_->map_off >= header_->data_off && header_->map_off < size_);
+  SLICER_CHECK_GE(header_->map_off, header_->data_off);
+  SLICER_CHECK_LT(header_->map_off, size_);
   SLICER_CHECK_EQ(header_->link_size, 0);
   SLICER_CHECK_EQ(header_->link_off, 0);
   SLICER_CHECK_EQ(header_->data_off % 4, 0);
