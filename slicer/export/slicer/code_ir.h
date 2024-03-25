@@ -311,6 +311,14 @@ inline IndexedOperand* CastOperand<IndexedOperand>(Operand* op) {
       converted = val;
       return true;
     }
+    bool Visit(MethodHandle* val) override {
+      converted = val;
+      return true;
+    }
+    bool Visit(Proto* val) override {
+      converted = val;
+      return true;
+    }
   };
   CastVisitor cv;
   op->Accept(&cv);
