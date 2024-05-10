@@ -66,6 +66,7 @@ struct String;
 struct Type;
 struct Field;
 struct Method;
+struct MethodHandle;
 struct Proto;
 struct DbgInfoHeader;
 struct LineNumber;
@@ -105,6 +106,7 @@ class Visitor {
   virtual bool Visit(Method* method) { return false; }
   virtual bool Visit(Proto* proto) { return false; }
   virtual bool Visit(LineNumber* line) { return false; }
+  virtual bool Visit(MethodHandle* mh) { return false; }
 };
 
 // The root of the polymorphic code IR nodes hierarchy
@@ -221,6 +223,16 @@ struct Method : public IndexedOperand {
   virtual bool Accept(Visitor* visitor) override { return visitor->Visit(this); }
 };
 
+struct MethodHandle : public IndexedOperand {
+  ir::MethodHandle* ir_method_handle;
+
+  MethodHandle(ir::MethodHandle* ir_method_handle, dex::u4 index) : IndexedOperand(index), ir_method_handle(ir_method_handle) {
+    SLICER_CHECK_NE(ir_method_handle, nullptr);
+  }
+
+  virtual bool Accept(Visitor* visitor) override { return visitor->Visit(this); }
+};
+
 struct Proto : public IndexedOperand {
   ir::Proto* ir_proto;
 
@@ -296,6 +308,14 @@ inline IndexedOperand* CastOperand<IndexedOperand>(Operand* op) {
       return true;
     }
     bool Visit(Method* val) override {
+      converted = val;
+      return true;
+    }
+    bool Visit(MethodHandle* val) override {
+      converted = val;
+      return true;
+    }
+    bool Visit(Proto* val) override {
       converted = val;
       return true;
     }
@@ -384,7 +404,7 @@ struct LineNumber : public Operand {
   int line = 0;
 
   explicit LineNumber(int line) : line(line) {
-    SLICER_WEAK_CHECK(line > 0);
+    SLICER_WEAK_CHECK(line >= 0);
   }
 
   virtual bool Accept(Visitor* visitor) override { return visitor->Visit(this); }
