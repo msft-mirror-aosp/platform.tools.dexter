@@ -226,7 +226,7 @@ static void CopySection(const T& section, dex::u1* image, dex::u4 image_size) {
   SLICER_CHECK_GT(section.ItemsCount(), 0);
   dex::u4 offset = section.SectionOffset();
   dex::u4 size = section.size();
-  SLICER_CHECK_GE(offset, sizeof(dex::Header));
+  SLICER_CHECK_GE(offset, dex::Header::kV40Size);
   SLICER_CHECK_LE(offset + size, image_size);
 
   ::memcpy(image + offset, section.data(), size);
@@ -253,18 +253,25 @@ dex::u1* Writer::CreateImage(Allocator* allocator, size_t* new_image_size) {
   // (ideally we shouldn't change the IR while generating an image)
   dex_ir_->Normalize();
 
+  int version = Header::GetVersion(dex_ir_->magic.ptr());
+  SLICER_CHECK_NE(version, 0);
+  SLICER_CHECK_GE(version, Header::kMinVersion);
+  SLICER_CHECK_LE(version, Header::kMaxVersion);
+  u4 header_size = version >= Header::kV41 ? Header::kV41Size : Header::kV40Size;
+
   // track the current offset within the .dex image
   dex::u4 offset = 0;
 
   // allocate the image and index sections
   // (they will be back-filled)
-  offset += sizeof(dex::Header);
+  offset += header_size;
   offset += dex_->string_ids.Init(offset, dex_ir_->strings.size());
   offset += dex_->type_ids.Init(offset, dex_ir_->types.size());
   offset += dex_->proto_ids.Init(offset, dex_ir_->protos.size());
   offset += dex_->field_ids.Init(offset, dex_ir_->fields.size());
   offset += dex_->method_ids.Init(offset, dex_ir_->methods.size());
   offset += dex_->class_defs.Init(offset, dex_ir_->classes.size());
+  offset += dex_->method_handles.Init(offset, dex_ir_->method_handles.size());
 
   // the base offset for the "data" meta-section
   SLICER_CHECK_EQ(offset % 4, 0);
@@ -290,6 +297,7 @@ dex::u1* Writer::CreateImage(Allocator* allocator, size_t* new_image_size) {
   FillProtos();
   FillMethods();
   FillClassDefs();
+  FillMethodHandles();
 
   // allocate the final buffer for the .dex image
   SLICER_CHECK_EQ(offset % 4, 0);
@@ -302,7 +310,7 @@ dex::u1* Writer::CreateImage(Allocator* allocator, size_t* new_image_size) {
   memset(image, 0, image_size);
 
   // finally, back-fill the header
-  SLICER_CHECK_GT(image_size, sizeof(dex::Header));
+  SLICER_CHECK_GT(image_size, header_size);
 
   dex::Header* header = reinterpret_cast<dex::Header*>(image + 0);
 
@@ -310,7 +318,7 @@ dex::u1* Writer::CreateImage(Allocator* allocator, size_t* new_image_size) {
   memcpy(header->magic, dex_ir_->magic.ptr(), dex_ir_->magic.size());
 
   header->file_size = image_size;
-  header->header_size = sizeof(dex::Header);
+  header->header_size = header_size;
   header->endian_tag = dex::kEndianConstant;
 
   header->link_size = 0;
@@ -331,6 +339,11 @@ dex::u1* Writer::CreateImage(Allocator* allocator, size_t* new_image_size) {
   header->class_defs_off = dex_->class_defs.SectionOffset();
   header->data_size = image_size - data_offset;
   header->data_off = data_offset;
+  if (version >= Header::kV41) {
+    header->data_size = 0;
+    header->data_off = 0;
+    header->SetContainer(0, header->file_size);
+  }
 
   // copy the individual sections to the final image
   CopySection(dex_->string_ids, image, image_size);
@@ -339,6 +352,7 @@ dex::u1* Writer::CreateImage(Allocator* allocator, size_t* new_image_size) {
   CopySection(dex_->field_ids, image, image_size);
   CopySection(dex_->method_ids, image, image_size);
   CopySection(dex_->class_defs, image, image_size);
+  CopySection(dex_->method_handles, image, image_size);
   CopySection(dex_->string_data, image, image_size);
   CopySection(dex_->type_lists, image, image_size);
   CopySection(dex_->debug_info, image, image_size);
@@ -381,7 +395,7 @@ dex::u4 Writer::CreateStringDataSection(dex::u4 section_offset) {
 template <class T>
 static void AddMapItem(const T& section, std::vector<dex::MapItem>& items) {
   if (section.ItemsCount() > 0) {
-    SLICER_CHECK_GE(section.SectionOffset(), sizeof(dex::Header));
+    SLICER_CHECK_GE(section.SectionOffset(), dex::Header::kV40Size);
     dex::MapItem map_item = {};
     map_item.type = section.MapEntryType();
     map_item.size = section.ItemsCount();
@@ -410,6 +424,7 @@ dex::u4 Writer::CreateMapSection(dex::u4 section_offset) {
   AddMapItem(dex_->field_ids, map_items);
   AddMapItem(dex_->method_ids, map_items);
   AddMapItem(dex_->class_defs, map_items);
+  AddMapItem(dex_->method_handles, map_items);
   AddMapItem(dex_->string_data, map_items);
   AddMapItem(dex_->type_lists, map_items);
   AddMapItem(dex_->debug_info, map_items);
@@ -574,11 +589,31 @@ void Writer::FillTypes() {
 void Writer::FillProtos() {
   const auto& protos = dex_ir_->protos;
   for (size_t i = 0; i < protos.size(); ++i) {
+
     const auto& irProto = protos[i];
     auto dexProtoId = &dex_->proto_ids[i];
+
     dexProtoId->shorty_idx = irProto->shorty->index;
     dexProtoId->return_type_idx = irProto->return_type->index;
     dexProtoId->parameters_off = FilePointer(irProto->param_types);
+  }
+}
+
+void Writer::FillMethodHandles(){
+  const auto& methodHandles = dex_ir_->method_handles;
+  for(size_t i = 0; i < methodHandles.size(); ++i){
+
+    const auto& irMethodHandle = methodHandles[i];
+    auto dexMethodHandle = &dex_->method_handles[i];
+
+    dexMethodHandle->method_handle_type = irMethodHandle->method_handle_type;
+
+    if(irMethodHandle->IsField()){
+      dexMethodHandle->field_or_method_id = irMethodHandle->field->index;
+    }
+    else{
+      dexMethodHandle->field_or_method_id = irMethodHandle->method->index;
+    }
   }
 }
 
@@ -907,6 +942,14 @@ void Writer::WriteInstructions(slicer::ArrayView<const dex::u2> instructions) {
         *idx2 = dex::u2(new_index2);
       } break;
 
+      case dex::kIndexMethodHandleRef: {
+        SLICER_CHECK_EQ(idx_size, 2);
+        dex::u4 new_index = MapMethodHandleIndex(*idx);
+        SLICER_CHECK_NE(new_index, dex::kNoIndex);
+        SLICER_CHECK_EQ(dex::u2(new_index), new_index);
+        *idx = dex::u2(new_index);
+      } break;
+
       default:
         break;
     }
@@ -1114,6 +1157,15 @@ dex::u4 Writer::MapFieldIndex(dex::u4 index) const {
 dex::u4 Writer::MapMethodIndex(dex::u4 index) const {
   if (index != dex::kNoIndex) {
     index = dex_ir_->methods_map.at(index)->index;
+    SLICER_CHECK_NE(index, dex::kNoIndex);
+  }
+  return index;
+}
+
+// Map an index from the original .dex to the new index
+dex::u4 Writer::MapMethodHandleIndex(dex::u4 index) const {
+  if (index != dex::kNoIndex) {
+    index = dex_ir_->method_handles_map.at(index)->index;
     SLICER_CHECK_NE(index, dex::kNoIndex);
   }
   return index;
